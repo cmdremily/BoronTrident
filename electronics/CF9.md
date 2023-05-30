@@ -26,6 +26,8 @@ See for example this oscilloscope shot of a CAN bus transfer in progress on a CA
 
 ![bad signal](images/random%20cable%20can%20bus.png)
 
+(Admittedly not the cleanest setup, I had my probe swapped on CAN_H/L and the ground level was not aligned but you can still read it.)
+
 Even though it initially looks decent, notice how the top and bottom of the signal isn't flat as expected, this is caused by reflections. In fact this signal is quite poor and at some points the differential signal level drops below the 1.5 V minimum level required by CAN bus, potentially causing transmission errors.
 
 ### OK, reflection bad, what do?
@@ -47,7 +49,7 @@ Not so fast tiger! Let's consider the list of requirements:
 
 * 120 Ohm characteristic impedance.
 * Rated for repeated bending at high speeds at bend radii suitable for your printer's umbilical.
-* Rated for torsion applications of up to 90° in `sqrt(2)*build_spec_mm` e.g. 0.5 m for a 350mm Trident.
+* Rated for torsion applications of up to 90° in `length_of_umbilical` distance.
 * Rated for the maximum chamber temperature you ever intend to run with some safety margin.
 * Has a jacket material that you're able to cut with the tools you have at hand. For example, cutting Polyurethane can be difficult.
 * There exists a seller actually willing to sell to you as an individual, you're buying what is typically an industrial use product.

@@ -21,7 +21,7 @@ Category | Requirement | Comment
 -|-|-
 Number of conductors | At least 4. Need 2 for signal and 2 for power | N/A.
 Type of conductors | Twisted Pair at least for signal conductors. | Twisted bundle also acceptable if other requirements are met.
-Power conductors cross-section | Depends on your voltage and toolhead, for 24 V and 4 A (96 W) you should stay above 0.5mm². | Figure out how much current you need at the toolhead, and then use an online calculator like [this](https://www.inchcalculator.com/voltage-drop-calculator/) to calculate a minimum cable thickness at 3% voltage drop.
+Power conductors cross-section | Depends on your voltage and toolhead, for 24 V and 4 A (96 W) you should stay above 0.5mm diameter. | Figure out how much current you need at the toolhead, and then use an online calculator like [this](https://www.inchcalculator.com/voltage-drop-calculator/) to calculate a minimum cable thickness at 3% voltage drop.
 Characteristic Impedance | As close 120 Ohm as possible | See below.
 
 ### What's Characteristic Impedance and why do I want it?

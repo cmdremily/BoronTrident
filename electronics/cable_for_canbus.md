@@ -9,10 +9,17 @@ The main mechanical requirements are:
 
 Category | Requirement | Comment
 -|-|-
-Bend radius and speed | Bend radius depends on the how the umbilical is supported, but 5 cm should be sufficient. Speed should be higher than maximum print-head speed. | Maximum bendradius typically when mounts-to-mount distance is at minimum.
-Torsion | 90° over umbilical length from mount-to-mount  | This torsion occurs when moving diagonally.
+Repeated bend radius and speed | Depends on the how the umbilical is supported, but 5 cm should be sufficient. Speed should be higher than maximum print-head speed. | Maximum bendradius typically when mounts-to-mount distance is at minimum.
+Torsion | Commonly 90° or 180° over umbilical length from mount-to-mount  | See below.
 Temperature | Maximum chamber temperature + 20° C for cable heating | This mainly affects what jacket materials are viable.
 Oil/Chemical resistance | Weak/No requirement | There should be no oil or acid contact on the cable.
+
+### Torsion Requirement
+The amount of torsion that the cable must allow depends on your printer geometry and where you mounted the umbilical. You must determine this from what is the highest torsion that the cable can experience on any move in your printer. 
+
+See the two pictures below for examples of where the umbilical mount is centered on the rear cross member vs A-motor:
+
+![90 and 180 degree torsion](images/cable%20torsion.png)
 
 ## Electrical Requirements
 The main electrical requirements are:
@@ -67,8 +74,11 @@ Vendor | Product | C. Impedance (@1MHz) | Max Recommended Power (3m @ 24V, 3% Vd
 igus | [CF9.05.04](https://www.igus.ie/product/CF9?artnr=CF9.05.04) | Measured as 100 Ohm | 96 W | 42mm @ 10 m/s [^1] | ±90°, with 1m cable length | 100 °C | See the [investigation](CF9.md).
 igus | [CF77.UL.05.04.D](https://www.igus.eu/product/CF77_UL_D?artnr=CF77.UL.05.04.D) | Calculated as 100 Ohm (?) | 96 W | 51mm @ 10 m/s [^2] |  ±180°, with 1m cable length | 80 °C | PUR jacket can be though to work with.
 igus | [CF113.018.D](https://www.igus.eu/product/CF113_D?artnr=CF113.018.D) | unknown | 96 W | 61.75 mm @ 10 m/s[^2] | None |  80 °C | Not recommended for long term umbilical use due to no torsion rating. One extra twisted pair.
-Various | [CAT5](https://en.wikipedia.org/wiki/Category_5_cable) or better | By design 100±15 Ohm | 28 W (24 AWG) | unknown | unknown | 60 °C | Suitable for short term use up to 60 °C chamber temp (no extra margin needed for self heating as power is not carried in jacket), with power provided separately.
+Various | [CAT5](https://en.wikipedia.org/wiki/Category_5_cable) or better | By design 100±15 Ohm | 28 W (24 AWG) per pair | None[^3] | None[^3] | 60 °C | Suitable for testing only.
+Various | [USB Cable](https://en.wikipedia.org/wiki/USB_communications#Electrical_specification) | By design 90±15% Ohm | 13.2 W per Vbus/GND pair (USB 3 cable, 28 AWG) | None[^3] | None[^3] | Varies | Suitable for testing if no CAT5 or better cable available.
 
 [^1]: Based on igus chain stress capacity of 7 and life time table, 12.5 million double strokes is guaranteed.
 
 [^2]: Based on igus chain stress capacity of 5 and life time table, 10 million double strokes is guaranteed.
+
+[^3]: These cables are typically not rated for repeated bending or torsion at speeds relevant to 3D printing. They will probably work until they don't.

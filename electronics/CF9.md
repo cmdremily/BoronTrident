@@ -82,7 +82,7 @@ I built a 1 MHz, 5 Vpp, 50% duty-cycle, 120 Ohm output impedance square wave gen
 
 ![signal generator](images/siggen.jpg)
 
-On the left, a 555 timer that with the two trim pots is adjusted to provide a (very cruddy, I'm pushing the chip close to its limit) base waveform that has 50% duty cycle and a frequency of 1 MHz.
+On the left, a 555 timer that with the two trim pots is adjusted to provide a (very cruddy, I'm pushing the chip close to its limit) base waveform that has 50% duty cycle and a frequency of 1 MHz (with C=1nF).
 
 In the middle, a 74x14 Schottky Inverter recovers the edges of the output from the 555 that is more of a sine wave than a square wave at this point. 
 

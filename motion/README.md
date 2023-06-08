@@ -1,6 +1,6 @@
-# Boron Motion (Work in Progress)
+# Boron Motion Mods (Work in Progress)
 
-The Boron Trident changes the Voron Trident motion system with the below mods aiming to improve reliability and simplicity:
+The Boron Trident augments the motion system with the below mods aiming to improve reliability and simplicity:
 
 * CAN Bus
 * Umbilical
@@ -10,22 +10,22 @@ The Boron Trident changes the Voron Trident motion system with the below mods ai
 This means that we do not use any microswitches for endstops.
 
 ## Why do the Umbilical mod?
-From lurking in the Voron discord, I've observed that the breakage of cables in the drag chains is a quite common failure mode. As of May 2023, the sourcing guide and BOM for the Voron Trident only specs "High-Flex Wire" with a minimum strandcount, leaving the builder to their devices. However, just because a cable is high flex doesn't mean that it's suitable for use in drag chains.
+Cable failures in the drag chains is a common failure mode in the Voron Discord. By using an umbilical we distribute the bend of the cables over the entire length of the umbilical, producing a much lower strain on the cable making it last much longer.
 
-Manufacturers like igus and Lapp make cables that are rated specifically for cable chains, they are stiffer to take a larger bend radius in the drag chain among other things. But that's not explained to the builder in the BOM, sourcing guide or manual.
-
-*By using an umbilical we distribute the bend of the cables over the entire length of the umbilical, producing a much lower strain on the cable making it last much longer, even when compared to properly rated cables.*
+Note: We pay special attention to the actual cable used to guarantee long operational life and reliability.
 
 In addition, removing the dragchain does the following:
 * Removes moving components that can cause issues.
 * Reduces the moving mass in the X/Y motion system. On average half the cable chains mass must be accelerated during tool-head moves.
 
 ##  Why do the CAN Bus mod?
-The CAN Bus mod is pretty much mandatory for the umbilical mod. Having all the wires that normally go to a toolhead ia long umbilical will get unwieldly and hard to maintain. It trades wiring complexity for configuration complexity, and wire failures to PCB failures. However, the configuration complexity is a one time cost and the PCB failure is much less likely than individual, non-drag-chain-rated wires. So on the whole it's a boost for reliability at the cost of configuration.
+The CAN Bus mod is pretty much mandatory for the umbilical mod due to the large number of cables that otherwise would be needed for the toolhead.
 
-Common problems with CAN Bus, seem to stem from user error at install time or bad choice of cable/mounting. With properly rated cable, correct mounting (supplied mods) and install these issues are mitigated.
-
-Using CAN Bus also reduces mass in the X/Y motion system by the mass of wires being removed.
+From a reliability point of view:
+* We remove one common failure point, the cable chains.
+* We use cable that is properly rated for the application to guarantee reliability.
+* We introduce more complexity with the CAN bus setup. People commonly have issues with CAN bus due to failure to follow the instructions exactly or bad choice of hardware.
+* Using CAN Bus also reduces mass in the X/Y motion system by the mass of wires being removed.
 
 ## Why do the Sensorless Homing mod?
 The most common criticisms of Sensorless Homing is that it's not as accurate, or simple as dedicated endstops. The endstop accuracy is needed to be able to correctly position the nozzle over the Z endstop, if the nozzle is not above the Z endstop, then the bed can potentially crash into the toolhead. Crash is bad.
@@ -34,18 +34,20 @@ The most common criticisms of Sensorless Homing is that it's not as accurate, or
 
 I argue that while a endstop is simpler to understand and to configure than Sensorless Homing, it's not simpler in terms of the hardware build. We're trading homing accuracy and configuration burden for simplicity and fewer things that can break. If you're worried about the reliability of sensorless homing, consider that the Prusa MK2/MK3 printers which are known for their reliability use sensorless homing on all axes.
 
-We mitigate the issue of the inaccurate home position and the crash risk of the Z axis by using an always connected Super PINDA (see the [e-axis mods](../e-axis/README.md)) inductive bed probe as a virtual Z endstop both for homing and for kinematic bed tramming. The Prusa Super PINDA probe is also highly reliable, again, they used on the Prusa MK3 printers known for their reliability. 
+We mitigate the issue of the inaccurate home position and the crash risk of the Z axis by using an always connected Super PINDA (see the [e-axis mods](../e-axis/README.md)) inductive bed probe as a virtual Z endstop both for homing and for kinematic bed tramming. The Prusa Super PINDA probe is also highly reliable, again, they used on the Prusa MK3 printers known for their reliability.
 
 The downside is that we're limited to metallic print sheets with the inductive probe. However spring steel sheets are pretty much the standard these days so that's not really a big issue in practice.
 
+Both a Z-endstop switch and probe-Z require a Z-offset that's adjusted per print sheet so there's no difference in conveinence there.
+
 ## BOM
-This is a total BOM list for the motion system mods. The BOM items are repeated in steps 1 and 2 for convenience and in case you only want to do those mods. The mods here rely on the SuperPINDA being installed from the [e-axis mods](../e-axis/README.md).
+This is a total BOM list for the motion system mods. The BOM items are repeated in steps 1, 2 and 3 for convenience and in case you only want to do those mods. The mods here rely on the SuperPINDA being installed from the [e-axis mods](../e-axis/README.md).
 
 **Do not substitute the Micro-Fit 3.0 connectors for any other connector types!** MicroFit 3 are chosen for their current carrying capability, secure connections and relatively small size. There is a cloned Micro-Fit 3.0 2x2 plug included in the EBB36 of "jmconn" brand. If you're not comfortable with this clone (the header on the PCB has no markings but is presumably also a clone, they should be fine), add a Micro-Fit 3.0 43020-series 2x2 plug to the BOM below as replacement as well as 4x MicroFit 3.0 43030 series crimp sockets.
 
-**Do not substitute the CF9.05.04 cable**, it has been carefully chosen to have long service life in this application and be workable without special tools. Yes, it's expensive for a piece of cable, properly rated cables always are.
+**Do not substitute the CF9.05.04 cable**, it has been carefully chosen to have long service life in this application and be workable without special tools. Yes, it's expensive for a piece of cable, properly rated cables always are. See [Cable for CAN bus](../electronics/cable_for_canbus.md) and [The CF9 Cable](../electronics/CF9.md) if you're curious as to why.
 
-**The below quantities are minimum quantities!** Get extras, especially of crimp connectors.
+**The below quantities are minimum quantities!** Get extras where appropriate, especially of crimp connectors.
 
 Quantity | Item | Comment
 -|-|-
@@ -60,14 +62,22 @@ Quantity | Item | Comment
 0.5 m | Red 0.5 mm^2 (AWG20) Stranded Hook-up Wire | Trident BOM. Length depending on wiring situation in electronics bay, safe amount indicated.
 0.5 m | Black 0.5 mm^2 (AWG20) Stranded Hook-up Wire | See above comment.
 2x 0.5 m | 0.14 mm^2 to 0.25 mm^2 (AWG26-AWG24) Solid core Hook-up wire | Any two unique colors, preferrably not black or red. Length depending on wiring situation in electronics bay, safe amount indicated.
+1x | 0.1" (3mm) cable tie | For tying down umbilical and bowden tube.
+2x | 2020 Drop-in T-nut M3 | Trident BOM.
+2x | 2020 Drop-in T-nut M5 | Trident BOM.
+1x | 2020 Drop-in T-nut M5 | Trident BOM, PTFE Coupler for 4mm OD tube, 3/8" outer thread (often incorrectly sold as "M10").
+40 cm | 1.5mm thick x 6mm wide foam | Trident BOM.
 2x | M5x16 BHCS (ISO 7380-1) | Trident BOM.
-1x | M5x10 BHCS (ISO 7380-1) | Trident BOM.
+4x | M5x10 BHCS (ISO 7380-1) | Trident BOM.
 1x | M3x6 BHCS (ISO 7380-1) | Trident BOM.
 2x | M3x40 SHCS (DIN912)  | Trident BOM. 
 4x | M3x12 SHCS (DIN912)  | Trident BOM. 
-2x | M3x8 SHCS (DIN912)  | Trident BOM. 
+4x | M3x8 SHCS (DIN912)  | Trident BOM. 
 4x | M3 Washer (DIN125) | Trident BOM.
 1x | M3 Threaded Insert | Trident BOM.
+1x | M5 15mm OD Washer (DIN125A) | Trident BOM.
+1x | M5 Hex Nut (DIN934) | Trident BOM.
+n/a | Printed parts | See the individual mods folders.
 
 ## How mod?
 
@@ -95,4 +105,8 @@ Follow the steps in [Umbilical Extruder Mount](umbilical-extruder-mount/README.m
 4. Connect 24V and GND to the 24V power supply. Use a multimeter to check between PSU studs and 12V rail/GND on the EBB36, if you get either of these two wires wrong, you will likely have to buy a new EBB36.
 5. Use WAGO spring clamp terminals to connect CAN_H on the CF9 cable to CAN_H on the RJ12 connector and same for CAN_L. We use WAGO here until we're sure they're correct after configure clipper. Once sure it's correct, replace with male/female 1x2 MicroFit 3 connection.
 
-### Step 4 - Configure clipper
+### Step 4 - Install umbilical guide and exhaust cover
+Follow the steps in [Umbilical Guide & Exhaust Cover](umbilical-guide/README.md).
+
+### Step 4 - Configure Klipper
+TBD

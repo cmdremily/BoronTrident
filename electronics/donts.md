@@ -10,11 +10,11 @@ Below is a non-exhaustive list of things that will get you into various kinds of
     * AC Neutral: Blue, The colour of the sky when you're relaxing.
     * AC Protective Earth (PE): Green and Yellow, the colour of daisies and grass growing on earth.
     * DC Ground: Black, always, don't use black for anything else.
-    * DC Power: Red or another bright, warm, colour (but only for 12V). Don't use these colours for anything else.
+    * DC Power: Red or another bright, warm, colour. Don't use these colours for anything else.
       * Consider using different colors for positive nets of different voltages. Stick to bright, warm colours. Alternatively use all red and tag with coloured electrical tape (bonus points if you label it)
     * Low Voltage Signal: Use colours that are not used for anything else in the system. Most low speed signalling protocols do not have colour standards so use what makes sense to you and be consistent. 
 * Confusing "Ground", "Protective Earth" and "Neutral"
-    * None of these should ever be connected together, magic smoke will escape or a fuse will pop, guaranteed.
+    * None of these should ever be connected together, magic smoke will escape and/or a fuse will pop, guaranteed.
     * Ground refers to 0 V DC, sometimes denoted V-. This is also called return. 
     * Protective Earth refers to the third wire that comes in your outlet but is not used for electricity transmission. On North American NEMA 5-15 outlets this is the round hole at the bottom. This wire exists to prevent your metallic devices from being energized if they inadvertently become connected to hot (via a loose wire, for example). If a hot wire contacts a grounded piece of your printer, ideally large current would flow and trip the breaker before significant damage occurs. If you have a GFCI/RCD it will trip those as well. PE should never be used as a return path for any current. This is sometimes called safety ground. 
     * Neutral is the return path for AC current (nominally; in many places you don't know which wire is neutral or live as the plug is reversible). This is also known confusingly as the grounded conductor. Despite this terminology, PE and Neutral are **not** interchangeable. 
@@ -46,17 +46,16 @@ Below is a non-exhaustive list of things that will get you into various kinds of
 * Getting ground and power (5V/12V/24V) swapped
     * Magic smoke, instantly.
 * Getting mains wires swapped
-    * Magic smoke, breaker pop, or fire, instantly.
+    * Magic smoke, breaker pop, fire, or all of the above, instantly.
 * Using a multimeter in resistance mode on an energized circuit
     * Your measurements will be incorrect garbage, don't do it.
 * Not strain relieving cables that move
     * They will break, and possibly cause one or more of the above things to also happen. Roll a D20.
     * Avoid zip ties for strain relief. They can put stress on wires and cause them to break if they are over-tightened. 
 * Assuming that something will work or be installed a certain way
-    * There are more ways to destroy your equipment than to hook it up incorrectly. Don't assume, read the manual. If it doesn't come with a manual, don't buy it.
+    * There are many more ways to destroy your equipment than there are to hook it up correctly, double check everything. Don't assume, read the manual. If it doesn't come with a manual, don't buy it.
     * Even things that appear to "work" may later cause damage or kill you, especially mains wiring. Electrical history is littered with the bodies of smart people who made something "work" but in an unsafe way. 
     * Do not assume wires are coloured correctly or consistently. Always trace or probe power wires before making modifications or connecting a new device. 
 * Be aware of failure modes and their consequences. Vorons are designed to be as fail safe as possible, however, there are a few things to watch out for:
    * MOSFETs really like to fail short. These are devices that act as an electrical switch to deliver power to other components, notably, the hotend heater. This means if the heater controller MOSFET fails short, it cannot be commanded open and your heater will heat until it self destructs or power is removed. *Thermal runaway protection does not protect against this particular failure*. If this concerns you there is a pinned post in the Voron Discord electronics channel with instructions for how to make the system safer. 
-   * Do not assume any over-current protection devices such as fuses or circuit breakers will necessarily protect you or your printer. They are much better than nothing but are not 100% reliable (nothing is). This is one of the reasons you should always check for shorts. Notably, fuses will not protect you from failures such as thermal runaway because those draw a normal amount of current. 
-    
+   * Do not assume any over-current protection devices such as fuses or circuit breakers will necessarily protect you or your printer. They are much better than nothing but are not 100% reliable (nothing is). This is one of the reasons you should always check for shorts. Notably, fuses will not protect you from failures such as thermal runaway because those draw a normal amount of current.

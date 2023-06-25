@@ -3,7 +3,7 @@
 ## Before We Start
 This is a difficult calibration process for experts. It requires 1: That you are able to be to measure accurately and consistently and 2: That you follow all the instructions exactly, as they are designed to cancel out various sources of error. If your measurements are not on-point or you don't control the error sources as instructed, you may end up with a worse calibration than your starting point.
 
-Expect to spend an evening on this process.
+Expect to spend an evening/afternoon on this process.
 
 Note: These instructions apply for CoreXY printers running Klipper. The method itself can be adapted to some other kinematics and firmware combinations. But that's out of scope for this document.
 
@@ -51,8 +51,8 @@ Please read this section completely before starting.
 1. Print the G-Code created above.
 1. Make sure to keep the bed heated, and keep the print on the bed after the print finishes to avoid thermal expansion of the bed messing up the measurements.
 1. Create a copy of the [calculation spreadsheet](https://docs.google.com/spreadsheets/d/12_Dv7_rYfVe8zgUhWrPeNcvSJCttsugQXTOSlCp6MAc).
-1. Familiarize yourself with the naming convention of the axii to measure along: ![ab_setup_annotated.png](images/ab_setup_annotated.png).
-1. Familiarize yourself with the dimensions to be measured in: ![ab_reference_dimensions.png](images/ab_reference_dimensions.png).
+1. Familiarize yourself with the naming convention of the axii to measure along: ![ab_setup_annotated.png](images/ab_setup_annotated.png)
+1. Familiarize yourself with the dimensions to be measured in: ![ab_reference_dimensions.png](images/ab_reference_dimensions.png)
 1. The two distances marked with red above should be measured on both the A and B diagonal.
 1. With the part still on the bed, masure the 10 mm and 150 mm distances on the A-axis with the print still on the printbed. Type these into the spreadsheet.
    - You may need to remove panels for your calipers to fit. If you must remove the print bed for measuring, you must measure quickly before the print sheet cools down and contracts. The calibration will be less accurate.

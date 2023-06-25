@@ -82,6 +82,20 @@ After completing the XY calibration procedure you need to do some things:
 
 If the spreadsheet shows a larger `Scale Error` on both axis after the second calibration round, that typically indicates that you got the `rotation_distance` for `[x_stepper]` and `[y_stepper]` swapped. You can re-enter the measured values from the first calibration round with the default value for the `Old Rotations` to save yourself one calibration round.
 
-Other possible causes for the `Scale Error` being too high is measuring inconsistency, or failure to control all the parameters that affect the surface quality in the "Preparation" section. Please review the slicing parameters, and re-slice as necessary.
+Other possible causes for the `Scale Error` being too high is measuring inconsistency (see "Measuring Tips" below), or failure to control all the parameters that affect the surface quality in the "Preparation" section. Please review the slicing parameters, and re-slice as necessary.
+
+Sometimes, if the A/B steppers measured notably different values, then it might be necessary to re-do the calibration 2-3 times as each run successively removes some skew, which improves your measurements iteratively.
 
 Depending on how large the `Scale Error` is, you may chose settle for a larger value. However remember that the value 
+
+## Measuring Tips
+When measuring, make sure that:
+
+* Both jaws are making parallel contact with the measuring surfaces by applying light pressure on the mid point of the jaws
+* Both jaws are making contact on the same height of the printed part, just below the top layer.
+* You're not pressing so hard that the part deflects. If you back off on the pressure and the measured value increases, that means that you're pressing too hard as the material flexes back once you release the pressure.
+* Measure each distance 3-4 times, removing the calipers each time. If you get the same value to within 0.02 mm each time, you'r probably doing it right.
+
+The below pictures show me measuring (one handedly, while holding a camera) the 150 mm and 10 mm reference dimensions respectively:
+![measuring the long reference](images/measuring_long_reference.jpg)
+![measuring the short reference](images/measuring_short_reference.jpg)

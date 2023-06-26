@@ -1,5 +1,14 @@
 # XY Differential Calibration
 
+## How is This Different from Other Calibration Procedures?
+Other calibration procedures typically fall into two categories:
+1. Use a dial gauge indicator to calibrate XYZ movements directly [like Teaching Tech does](https://teachingtechyt.github.io/calibration.html#xyzsteps).
+2. Print a part, measure some dimensions and compare them to the intended length and use the resulting scale factor, possibly after averaging like [Calibration Bro](https://www.printables.com/model/164261-calibration-bro-calibration-shape-calculator-klipp) or the non-free [Califlower](https://vector3d.co.uk/product/califlower/) by V3D.
+
+The first category (1) above suffers from difficult setup and a short travel distance on the indicator meaning that any errors from setup or instrument have a proportionally large impact on the final calibration as well as limiting the precision, in particularly on CoreXY printers the setup is bordering on impossible in the presence of even tiny amounts of skew. The second category (2) suffers from issues where the presence of material shrinkage and/or thermal expansion of the print bed are not accounted for, or they calibrate in the XY dimension while the `rotation_distance` and `steps_per_mm` values are given for the A/B motors in CoreXY printers, and thus in general this method result in an incorrect calibration for XY steps/rotation distance.
+
+The method proposed here uses the difference between two measurements (therefore it's a "differential measurement") on the same axis to cancel out effects of extrusion width and material shrinkage, it also measures along the A/B axis for CoreXY printers to directly calibrate the `rotation_distance` and `steps_per_mm` values, as well as provide steps to mitigate the effects of thermal expansion of the build plate.
+
 ## Before We Start
 This is a difficult calibration process for experts. It requires 1: That you are able to be to measure accurately and consistently and 2: That you follow all the instructions exactly, as they are designed to cancel out various sources of error. If your measurements are not on-point or you don't control the error sources as instructed, you may end up with a worse calibration than your starting point.
 
@@ -14,12 +23,12 @@ I reduced the scale error from (0.221%, -0.157%) to (0.007%, 0.007%) for the B- 
 
 The 150mm reference dimension before calibration measured as 150.24 mm and 149.68 mm on the B- and A-diagonals respectively. This is after material shrinkage so only indicative of the relative difference between A and B. After calibration the same dimensions measured 149.92 mm and 149.93 mm respectively, again, in the presence of material shrinkage.
 
-For reference, based on repeated measurements, I estimate that I can consistently measure the reference dimensions to within 0.02 mm indicated on my digital vernier calipers. The calipers are calibrated from factory to have an error less than 0.02mm on the 150mm range. This yields a total, maximum estimated error (instrument + technique) of ±0.04 mm, which works out to ±0.00057 in the rotation distance or about ±0.570 µm per full rotation of the pulley. This is possible thanks to the high accuracy (±0.04mm) in relation to the long measurement distance (150mm). If you do not believe this, I recommend you read [xy-differential-calibration.pdf (TBD)](xy-differential-calibration.pdf).
+For reference, based on repeated measurements, I estimate that I can consistently measure the reference dimensions to within 0.02 mm indicated on my digital calipers. The calipers are calibrated from factory to have an error less than 0.02mm on the 150mm range. This yields a total, maximum estimated error (instrument + technique) of ±0.04 mm, which works out to ±0.00057 in the rotation distance or about ±0.570 µm per full rotation of the pulley. This is possible thanks to the high accuracy (±0.04mm) in relation to the long measurement distance (150mm). If you do not believe this, I recommend you read [xy-differential-calibration.pdf (TBD)](xy-differential-calibration.pdf).
 
 ## Requirements
 
 For this calibration procedure you will need the following:
-* Digital vernier calipers, at least 150mm long, with a precision of 0.01mm.
+* Digital calipers, at least 150mm long, with a precision of 0.01mm.
   - If you need a recommendation, nobody has ever gotten fired for buying Mitutoyo.
 * Some high quality filament with consistent cross-sectional area.
   - If you need a recommendation, Prusament PETG is a good option.

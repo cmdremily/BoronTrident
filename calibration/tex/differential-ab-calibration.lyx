@@ -1,0 +1,1305 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\begin_modules
+theorems-ams-bytype
+\end_modules
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize a4paper
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 2
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+Differential Calibration for A/B-steps on CoreXY Printers
+\end_layout
+
+\begin_layout Author
+CmdrEmily
+\end_layout
+
+\begin_layout Date
+2023-06-20
+\end_layout
+
+\begin_layout Abstract
+Contrary to established practice, the rotation distance for the A- and B-motors
+ on Core XY printers is not an exactly calculated value, it's a function
+ of belt tension and manufacturing tolerances
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Please see the appendix for more details.
+\end_layout
+
+\end_inset
+
+; As such it is subject to calibration, which will be discussed in this
+ paper.
+ Current calibration processes either rely on directly measuring toolhead
+ motion using a dial gauge indicator, or by printing a calibration model.
+ Measuring the toolhead motion directly works poorly for CoreXY printers
+ as the each motor drives the toolhead diagonally instead of parallell to
+ the X and Y axes and it's difficult to correctly position the dial gauge
+ indicator colinearly to the motors' driven axis.
+ On the other hand, current methods relying on calibration prints do not
+ in general account for both the material shrinkage, thermal expansion of
+ the print bed and the fact that the A/B-steps of the motors affect the
+ toolhead motion along the diagonals instead of directly along the X and
+ Y axes.
+ This paper proposes a method which is specifically designed to cancel out
+ errors from material shrinkage and extrusion width, as well as minimize
+ the impact from thermal expansion of the print bed.
+ The method can also be applied to cartesian printers with slight modification.
+ 
+\emph on
+If you're looking for the step-by-step tutorial, please navigate to: 
+\begin_inset CommandInset href
+LatexCommand href
+name "github.com/cmdremily/BoronTrident/"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/xy-differential-calibration.md"
+literal "false"
+
+\end_inset
+
+, this document aims to prove the correctness and accuracy of the method
+ rather than being a calibration guide.
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+The proposed method calibrates the physical XY movement of the toolhead
+ and is by design not intended to calibrate the actually printed parts that
+ the printer produces.
+ In other words, the purpose of the calibration is to make sure that the
+ toolhead performs the movements in the XY plane as commanded in G-Code.
+ The A/B steps is a fundamental property of the printer, if they are incorrect
+ other calibrations such as skew correction and part scaling in the slicer
+ can be used to attempt to correct for them.
+ However, since the toolhead isn't performing the movements as intended
+ by the slicer, these calibrations can only 
+\emph on
+indirectly
+\emph default
+ adjust for the error in the A/B-steps, often with side effects such as
+ perimeters being too close or too far away from eachother, or local over-/under
+-extrusion.
+\end_layout
+
+\begin_layout Standard
+It's always best to correct any error at its source, which is the goal of
+ this method.
+\end_layout
+
+\begin_layout Section
+Sources of Error
+\end_layout
+
+\begin_layout Standard
+In order to produce an accurate calibration for the A/B steps we must devise
+ a method of accurately measuring how far the toolhead has actually moved
+ when commanded to move a specific distance.
+ As measuring the toolhead movement directly on a CoreXY is difficult we
+ are left with the option to indirectly calibrate the toolhead movenemt
+ through printing a calibration model.
+ The sources of error that we have to contend with are:
+\end_layout
+
+\begin_layout Itemize
+Thermal expansion/contraction of the print bed 
+\end_layout
+
+\begin_layout Itemize
+Extrusion width error, both filament width inconsistency and extrusion feed
+ rate error
+\end_layout
+
+\begin_layout Itemize
+Material shrinkage
+\end_layout
+
+\begin_layout Itemize
+Measurement error, both from the measuring device and the measuring technique
+\end_layout
+
+\begin_layout Standard
+We will keep these in mind as we derive the method.
+ 
+\end_layout
+
+\begin_layout Section
+Method Overview
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename C:/Users/CmdrEmily/Source/BoronTrident/calibration/images/ideal_distances.svg
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Ideal-wall-to-wall-distance."
+
+\end_inset
+
+Two opposing walls without infill inbetween.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ Let's consider the case with two opposing walls printed without any infill,
+ as in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Ideal-wall-to-wall-distance."
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ The distance between the outer walls is 
+\begin_inset Formula $L$
+\end_inset
+
+, the distance from centre to centre of the exterior perimeter is 
+\begin_inset Formula $X$
+\end_inset
+
+, and the extrusion width is 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ These quantities trivially relate to each other as:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+L=X+2\frac{W}{2}=X+W.\label{eq:distance}
+\end{equation}
+
+\end_inset
+
+ However, if we have two pairs of such walls with different dimensions,
+ call them: 
+\begin_inset Formula $L_{1}=X_{1}+W$
+\end_inset
+
+ and 
+\begin_inset Formula $L_{2}=X_{2}+W$
+\end_inset
+
+, then by taking the difference as:
+\begin_inset Formula 
+\begin{equation}
+\Delta L_{1,2}=L_{1}-L_{2}=X_{1}-X_{2}\label{eq:differential}
+\end{equation}
+
+\end_inset
+
+we see that the effect of the extrusion width 
+\begin_inset Formula $W$
+\end_inset
+
+ is cancelled out.
+ We will call this a 
+\begin_inset Quotes eld
+\end_inset
+
+differential measurement
+\begin_inset Quotes erd
+\end_inset
+
+ going forward.
+ In fact, we can see that any constant that is added to 
+\begin_inset Formula $L$
+\end_inset
+
+ will be cancelled out in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:differential"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ This means that any error which is independent of 
+\begin_inset Formula $X$
+\end_inset
+
+, and affects both pairs of walls equally, will be cancelled out in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:differential"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ This leads us to our first lemma:
+\end_layout
+
+\begin_layout Lemma
+\begin_inset CommandInset label
+LatexCommand label
+name "differential-lemma"
+
+\end_inset
+
+Any error affecting the measured length 
+\begin_inset Formula $L$
+\end_inset
+
+ between the outer edges of two exterior perimeters, which is independent
+ of the distance between the centres of the two opposing exterior extrusions
+ (i.e.
+ independent of 
+\begin_inset Formula $X$
+\end_inset
+
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:distance"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+), and which equally affects two such measured lengths: 
+\begin_inset Formula $L_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $L_{2}$
+\end_inset
+
+ will be cancelled out when taking the difference between those: 
+\begin_inset Formula $\Delta L_{1,2}=L_{1}-L_{2}$
+\end_inset
+
+.
+ In other words, any constant errors added to 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:distance"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ will be cancelled out in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:differential"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+This is a key result that will allow us to cancel out the error from extrusion
+ width and material shrinkage.
+\end_layout
+
+\begin_layout Standard
+In the ideal case, 
+\begin_inset Formula $X$
+\end_inset
+
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:distance"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ is equal to the distance that the toolhead moves between these two perimeters,
+ and 
+\begin_inset Formula $W$
+\end_inset
+
+ is the extrusion width set in the slicer.
+ However, in reality the toolhead doesn't move the exact intended distance,
+ nor is the extrusion width exactly 
+\begin_inset Formula $W$
+\end_inset
+
+.
+ We call these non-ideal values as: 
+\begin_inset Formula $x=X\lambda$
+\end_inset
+
+ where 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ is a scale factor, and 
+\begin_inset Formula $w=W\delta+\epsilon$
+\end_inset
+
+ where 
+\begin_inset Formula $\delta$
+\end_inset
+
+ is a scale error on the extrusion width and 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ is any error which can be described by lemma 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "differential-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ We then get measured distance 
+\begin_inset Formula $l$
+\end_inset
+
+ in the non-ideal case: 
+\begin_inset Formula 
+\begin{equation}
+l=x+2\frac{w}{2}=x+w
+\end{equation}
+
+\end_inset
+
+and of course:
+\begin_inset Formula 
+\begin{equation}
+\Delta l_{1,2}=l_{1}-l_{2}=x_{1}-x_{2}.
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If we then take the ratio of the differential non-ideal measurement and
+ the ideal differential measurement:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta l_{1,2}}{\Delta L_{1,2}}=\frac{x_{1}-x_{2}}{X_{1}-X_{2}}=\frac{X_{1}\lambda-X_{2}\lambda}{X_{1}-X_{2}}=\lambda\label{eq:scale-factor}
+\end{equation}
+
+\end_inset
+
+we get the scale error on the toolhead movement.
+ We formulate this into our second lemma:
+\end_layout
+
+\begin_layout Lemma
+\begin_inset CommandInset label
+LatexCommand label
+name "scale-factor-lemma"
+
+\end_inset
+
+By taking two differential measurements along the same axis, the ratio between
+ them will produce the scale error of the toolhead movement along that axis.
+\end_layout
+
+\begin_layout Standard
+We now have everything we need to design a calibration model which is immune
+ to error in extrusion width (but not inconsistency) and material shrinkage
+ as long as lemma 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "differential-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ applies.
+\end_layout
+
+\begin_layout Section
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:Designing-a-Calibration"
+
+\end_inset
+
+Designing a Calibration Model
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename C:/Users/CmdrEmily/Source/BoronTrident/calibration/images/single extrusion.jpg
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:one-line-wide-extrusions"
+
+\end_inset
+
+One extrusion wide lines to measure 
+\begin_inset Formula $L_{i}$
+\end_inset
+
+ from.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+Consider a calibration model that consists of three parallell, single width,
+ single layer extrusions as in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:one-line-wide-extrusions"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ It's obvious that the requirements for lemma 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "differential-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ are met when taking the differential measurement between the two line pairs
+ as indicated; Material shrinkage will affect all lines homogeneously and
+ the distance between the lines isn't affected by material shrinkage, as
+ they are trivial lines perpendicular to the measuring direction.
+\end_layout
+
+\begin_layout Standard
+However, this simple calibration model while theoretically useful, is unpractica
+l.
+ Measuring single extrusions accurately is difficult as there is very little
+ for the jaws of the calipers to align on, and making the extrusions taller
+ just means that they will delaminate from the bed when measuring or deflect
+ too easily, again making measuring difficult.
+ A better calibration model is needed.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename C:/Users/CmdrEmily/Source/BoronTrident/calibration/images/pylons3d.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:Improved-calibration-model"
+
+\end_inset
+
+Improved calibration model for a single axis.
+ Distances not to scale for image size reasons.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+Inspired by the simple three parallell lines model above, we create a more
+ rigid model that will be more practical for measurements as shown in figure
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Improved-calibration-model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Note that built-in brims are added to keep the pylons stable on the build
+ plate during measuring.
+ The brims are chosen so that they never touch another pylon's brim, therefore
+ making sure that each pylon's shrinkage will be independent of each other.
+ Each pylon should be printed with external perimeters first and have the
+ seams positioned away from the measurement surfaces (marked blue in 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Improved-calibration-model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) to guarantee surface consistency.
+ The pylons must also be printed with enough perimeters to produce a solid
+ part that will shrink symmetrically.
+ Finally, the part must be printed without any over-extrusion to prevent
+ material build-up in the middle of the pylon during printing which may
+ affect the measuring surface on the higher layers.
+\end_layout
+
+\begin_layout Standard
+From the above we see that as the brims don't touch, no shrinking depends
+ on 
+\begin_inset Formula $X_{1}$
+\end_inset
+
+ or 
+\begin_inset Formula $X_{2}$
+\end_inset
+
+.
+ We also see that each pair of measurement surfaces will shrink towards
+ the pylon centre identically so that means that the requirements for lemma
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "differential-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ hold.
+ 
+\end_layout
+
+\begin_layout Standard
+Although somewhat counter intuitive, the amount that the pylons shrink by
+ doesn't matter, as long as they shrink in the same way, the requirements
+ for lemma 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "differential-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ are still met and the shrinkage is cancelled out in equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:differential"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Impact from Filament Cross-Sectional Inconsistency
+\end_layout
+
+\begin_layout Standard
+Let's assume that an extrusion width of 
+\begin_inset Formula $w$
+\end_inset
+
+ has been requested at a layer height of 
+\begin_inset Formula $h$
+\end_inset
+
+ and a linear XY speed of 
+\begin_inset Formula $v$
+\end_inset
+
+, then we expect that a total flow rate of 
+\begin_inset Formula $whv$
+\end_inset
+
+ will be achieved.
+ For a nominal filament diameter of 
+\begin_inset Formula $d$
+\end_inset
+
+, linear extruder feed rate then becomes 
+\begin_inset Formula $f=\frac{whv}{\frac{d^{2}}{4}\pi}$
+\end_inset
+
+.
+ How much does the extrusion width 
+\begin_inset Formula $w$
+\end_inset
+
+ change if the filament diameter changes by 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+? 
+\end_layout
+
+\begin_layout Standard
+Rewriting the above, gives 
+\begin_inset Formula $w$
+\end_inset
+
+ as:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{fd^{2}\pi}{4hv}=w
+\]
+
+\end_inset
+
+introducing an error of 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ to 
+\begin_inset Formula $d$
+\end_inset
+
+ gives:
+\begin_inset Formula 
+\[
+\frac{f\left(d+\epsilon\right)^{2}\pi}{4hv}=w_{\epsilon}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+w+\frac{f\left(2d\epsilon+\epsilon^{2}\right)\pi}{4hv}\overset{2d\epsilon\gg\epsilon^{2}}{\approx}w+\frac{f2d\epsilon\pi}{4hv}\approx w_{\epsilon}
+\]
+
+\end_inset
+
+plugging in 
+\begin_inset Formula $f=\frac{whv}{\frac{d^{2}}{4}\pi}$
+\end_inset
+
+ again:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{2\epsilon}{d}w\approx w_{\epsilon}-w
+\]
+
+\end_inset
+
+which gives the extrusion width error.
+ The average of the reported deviation of the diameter on my spools of Prusament
+ seems to be around 
+\begin_inset Formula $\epsilon=0.02$
+\end_inset
+
+ mm, taking that as a representative value of filament with low variance,
+ this results in an extrusion width error of: 
+\begin_inset Formula $0.04mm/1.75mm\cdot0.6mm\approx13.7\text{µm}$
+\end_inset
+
+ for a 0.6 mm extrusion width.
+ However, only half of this will be on the measuring surface, i.e.
+ 6.9 µm (nice) surface inconsistency can be expected.
+ This error is sufficiently small to not have a significant impact on the
+ accuracy of the calibration.
+ 
+\end_layout
+
+\begin_layout Standard
+It should be noted, that the calibration model proposed above uses a relatively
+ low amount of filament so it's likely that the local consistency of the
+ diameter of the filament will be better than the above.
+ We can safely ignore this error, assuming that the calibration is done
+ using filament with a low variance in the cross-sectional area.
+\end_layout
+
+\begin_layout Subsection
+Dimensioning the Calibration Model
+\end_layout
+
+\begin_layout Standard
+Recall equation 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:scale-factor"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ for the scale factor 
+\begin_inset Formula $\lambda$
+\end_inset
+
+.
+ As the denominator consists of exact values from the calibration model,
+ there are no sources of errors here.
+ However, the numerator contains the measurement error twice, once for each
+ reference dimension.
+ In the best case, these errors can cancel, in the worst case they can stack.
+ In order to minimize this error, the denominator should be made as large
+ as possible, this is achieved by making the minor reference dimension as
+ small as possible and the major dimension as large as possible.
+ For the model provided, we chose 150mm for the major dimension as it's
+ a common size for calipers (which can typically measure a few mm extra),
+ and likewise we chose 10 mm for the minor dimensions as this was the smallest
+ dimension that allowed the pylons to be sturdy enough to not deflect during
+ measurement and the brim be large enough to securely keep the pylons on
+ the print bed.
+\end_layout
+
+\begin_layout Standard
+Using these dimensions, a stacked measurement error of 0.05 mm works out
+ to an error in the steps value of 
+\begin_inset Formula $\frac{0.05}{150-10}\approx0.0357\%$
+\end_inset
+
+.
+ For reference on a 20 tooth 2GT pulley, this is approximately 14µm per
+ 40mm.
+\end_layout
+
+\begin_layout Standard
+It's worth noting that if the measurement error is a bias error (i.e.
+ consistently measuring slightly over or slightly under, or the instrument
+ has an offset error) then that error will also cancel in equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:differential"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ and doesn't affect the accuracy of 
+\begin_inset Formula $\lambda$
+\end_inset
+
+.
+ Therefore it's important to measure multiple times and practice measuring
+ until consistent measurements are obtained.
+\end_layout
+
+\begin_layout Standard
+For reference, a good pair of digital calipers can have an accuracy of 0.02
+ or 0.01 mm over the full 150 mm range.
+ Assuming that the measurement technique used produces consistent measurements
+ within 0.01mm (i.e.
+ the error which isn't cancelled by equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:differential"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ is 0.01mm), and the error from the instrument is 0.015 mm, and there's 0.005
+ mm error from the filamen inconsistency, then the total error is: 
+\begin_inset Formula $2\left(0.015+0.005\right)+0.01=0.05$
+\end_inset
+
+ mm.
+ So the above accuracy is a representative upper bound on accuracy which
+ is achievable with good instruments, good filament and good technique.
+\end_layout
+
+\begin_layout Subsection
+Aligning the Calibration Model
+\end_layout
+
+\begin_layout Standard
+The calibration model as described above should be aligned so that the scale
+ factor 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ is measured in the primary direction of the motors.
+ This means that for a cartesian printer, the measurement directions should
+ be axis aligned.
+ For a Core XY printer the calibration model should be on a 45° diagonal
+ as each of the motor A-/B-motors drive a diagonal, see figure 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "fig:core-xy-alignment"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ A final note on Core XY printers, it's easy to get confused about which
+ 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ is for which motor, if on repeated calibrations the steps values doesn't
+ converge, then it's highly likely that the motors' step values have been
+ swapped.
+\end_layout
+
+\begin_layout Standard
+Failure to do these steps will cause the calibration process to not converge
+ on the correct steps value for the motors.
+\end_layout
+
+\begin_layout Standard
+
+\emph on
+Do not rotate the calibration model in the slicer, rebuild it in the correct
+ orientation in your CAD program to avoid errors from the floating point
+ math in the matrix multiplication of the rotation in the slicer.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename C:/Users/CmdrEmily/Source/BoronTrident/calibration/images/ab_setup.png
+	width 100col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:core-xy-alignment"
+
+\end_inset
+
+Calibration model correctly aligned for Core XY.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+About Thermal Expansion of the Print Bed
+\end_layout
+
+\begin_layout Standard
+For reference, if we take 
+\begin_inset Formula $14\cdot10^{-6}$
+\end_inset
+
+ as a typical thermal expansion coefficient for a stainless steel print
+ sheet, then a 80° C bed when cooling down to 20°C will cause a 150mm distance
+ to shrink by 
+\begin_inset Formula $14\cdot10^{-6}\cdot\left(80-20\right)\cdot150=0.126$
+\end_inset
+
+ mm which is large in comparison to the errors we're trying to calibrate
+ for.
+\end_layout
+
+\begin_layout Standard
+We will mitigate this source of error by reducing the temperature of the
+ print-bed as far as possible and by measuring the calibration model on
+ the heated print bed, thus not letting the bed contract by cooling.
+\end_layout
+
+\begin_layout Section
+Process Overview
+\end_layout
+
+\begin_layout Standard
+The process of calibration is described in brief here, a step-by-step tutorial
+ together with calibration models is available on 
+\begin_inset CommandInset href
+LatexCommand href
+name "github.com/cmdremily/BoronTrident/"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/xy-differential-calibration.md"
+literal "false"
+
+\end_inset
+
+.
+ This section should be considered as informative.
+\end_layout
+
+\begin_layout Enumerate
+On the printer
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Make sure belts are equally and properly tensioned, changing belt tensions
+ means that the calibration has to be redone.
+\end_layout
+
+\begin_layout Itemize
+Clear any previous skewcorrections.
+ On Core XY printers, the skew can often be corrected for solely by the
+ steps calibration in this document.
+ Re-do skew correction after steps have been calculated.
+\end_layout
+
+\begin_layout Itemize
+Reset motor steps to the default value calculated from pulley geometry.
+\end_layout
+
+\begin_layout Itemize
+Keep the nozzle clean from oozing, so it doesn't affect the measurements.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+For your filament
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Make sure that pressure advance has a reasonably good value for your filament
+ of choice.
+\end_layout
+
+\begin_layout Itemize
+Make sure that retractions are tuned decently.
+\end_layout
+
+\begin_layout Itemize
+Reduce extrusion multiplier slightly.
+\end_layout
+
+\begin_layout Itemize
+Disable cooling fan and use the lowest temperatures possible to make shrinkage
+ ocurr uniformly and minimally.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Slice the calibration model as noted in section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:Designing-a-Calibration"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+Slow down the print, around 60mm/s and 800mm/s2 is good.
+ It's important that there's no ringing artefacts affecting the measuring
+ surfaces.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+Print the model
+\end_layout
+
+\begin_layout Enumerate
+Measure the reference directions in both directions 
+\end_layout
+
+\begin_layout Enumerate
+Use equation 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:scale-factor"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ to compute the scale factor to correct the steps values by and update printer
+ configuration
+\end_layout
+
+\begin_layout Enumerate
+Repeat from step 4 until the change to steps values between iterations is
+ small.
+ The repetition may be needed if a significant skew was present on a Core
+ XY printer to start, the skew would mean that the pylons form a rhombus
+ instead of a rectangle, introducing a scale error on the measurement.
+ Every iteration corrects the skew until eventually the method converges.
+\end_layout
+
+\begin_layout Section
+Closing Words
+\end_layout
+
+\begin_layout Standard
+We have proven via lemmas 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "differential-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ and 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "scale-factor-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ that if a few conditions are met, it's possible to design a calibration
+ model that allows for the accurate calibration of A-/B-steps even in the
+ presence of extrusion error and material shrinkage.
+ We have also show an example of one such a calibration model and argued
+ for its correctness and estimated that errors as low as 14µm or lower per
+ 40mm can be achieved under good conditions.
+\end_layout
+
+\begin_layout Section
+Appendix: Why is the calculated A/B-steps value incorrect?
+\end_layout
+
+\begin_layout Standard
+The A/B rotation distance is commonly considered a 
+\begin_inset Quotes eld
+\end_inset
+
+calculated
+\begin_inset Quotes erd
+\end_inset
+
+ quantity, where the value is given from the pulley geometry and considered
+ an exact value.
+ To see why this is wrong, consider that we can also calculate the exact
+ value for the rotation distance for the extruder, and this is often done,
+ yet the norm is to calibrate this value even after calculating it.
+ Why would the extruder be special in this way? Another way to see that
+ the calculated A/B rotation should be calibrated is to consider the following
+ scenario: Two 20 tooth pulleys are attached to a shaft, and two idlers
+ are attached to another shaft 1 meter away.
+ We cut a belt that has the ideal length and pull it over the bottom pulley
+ and idler, let's say that this belt has 1020 notches.
+ Next we cut another belt, this time with 980 notches, and we stretch it
+ over the top pulley and idler.
+ Next we turn the pulley 51 full revolutions.
+ The bottom belt with 1020 notches will have rotated one whole revolution
+ (
+\begin_inset Formula $\frac{51\cdot20}{1020}=1$
+\end_inset
+
+), but the top belt with 980 notches will have rotated 
+\begin_inset Formula $\frac{51\cdot20}{980}\approx1.04$
+\end_inset
+
+ revolutions.
+ This means that as both belts span the same length, if you would draw a
+ dot on both belts, the dot on the top belt will move faster and further
+ than the bottom dot.
+ In other words, the belt tension affects how far the belt (or the X carriage)
+ moves with each revolution, therefore the rotation distance must be calibrated
+ for A/B motors.
+\end_layout
+
+\begin_layout Standard
+In a way this can be understood as, the rotation distance is the actual
+ belt pitch multiplied by the tooth count on the pulley, but the belt pitch
+ is a function of the belt tension and manufacturing tolerance, it's not
+ an universal constant.
+\end_layout
+
+\end_body
+\end_document

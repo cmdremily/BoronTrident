@@ -16,14 +16,14 @@ Expect to spend an evening/afternoon on this process.
 
 Note: These instructions apply for CoreXY printers running Klipper. The method itself can be adapted to some other kinematics and firmware combinations. But that's out of scope for this document.
 
-Details about why this works and is correct are explained in: [xy-differential-calibration.pdf (TBD)](xy-differential-calibration.pdf).
+Details about why this works and is correct are explained in: [differential-ab-calibration.pdf](differential-ab-calibration.pdf).
 
 ## What to Expect in Terms of Results
 I reduced the scale error from (0.221%, -0.157%) to (0.007%, 0.007%) for the B- and A-diagonals respectively.
 
 The 150mm reference dimension before calibration measured as 150.24 mm and 149.68 mm on the B- and A-diagonals respectively. This is after material shrinkage so only indicative of the relative difference between A and B. After calibration the same dimensions measured 149.92 mm and 149.93 mm respectively, again, in the presence of material shrinkage.
 
-For reference, based on repeated measurements, I estimate that I can consistently measure the reference dimensions to within 0.02 mm indicated on my digital calipers. The calipers are calibrated from factory to have an error less than 0.02mm on the 150mm range. This yields a total, maximum estimated error (instrument + technique) of ±0.04 mm, which works out to ±0.00057 in the rotation distance or about ±0.570 µm per full rotation of the pulley. This is possible thanks to the high accuracy (±0.04mm) in relation to the long measurement distance (150mm). If you do not believe this, I recommend you read [xy-differential-calibration.pdf (TBD)](xy-differential-calibration.pdf).
+For reference, based on repeated measurements, I estimate that I can consistently measure the reference dimensions to within 0.02 mm indicated on my digital calipers. The calipers are calibrated from factory to have an error less than 0.02mm on the 150mm range. This yields a total, maximum estimated error (instrument + technique) of ±0.04 mm, which works out to ±0.00057 in the rotation distance or about ±0.570 µm per full rotation of the pulley. This is possible thanks to the high accuracy (±0.04mm) in relation to the long measurement distance (150mm). If you do not believe this, I recommend you read [differential-ab-calibration.pdf](differential-ab-calibration.pdf).
 
 ## Requirements
 
@@ -52,6 +52,8 @@ For this calibration procedure you will need the following:
   * Disable brim, there's a built in brim.
   * Use the same bed and nozzle temperature for all layers, and use the lowest bed and nozzle temperature you can get away with. We want the minimum amount of thermal expansion both of the build plate and the filament.
   * Disable cooling fan and use a printing enclosure if possible. We want the part to stay warm until the print is over so it shrinks uniformly.
+
+**A note on the print settings:** Contrary to what V3D says in [STOP Printing Calibration Cubes!](https://www.youtube.com/watch?v=dbWAhb40kG4&t=445s) you must make the above changes to your print settings to get an accurate calibration. Remember, we're calibrating the physical movement of the toolhead, not the print itself, therefore we must make sure that the print settings accommodate this as far as possible. Further calibration like for example shrinkage, elephant's foot, extrusion multiplier, etc., needs to be applied after the XY motion has been calibrated to achieve accurate parts. This method is not a panacea.
 
 ## Print & Measure
 

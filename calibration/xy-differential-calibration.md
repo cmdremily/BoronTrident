@@ -1,5 +1,12 @@
 # XY Differential Calibration
 
+## Why is This Calibration Necessary?
+Contrary to popular belief, the `rotation_distance` for the A- and B-motors on Core XY printers is not an exact value calculated from the belt pitch and pulley tooth count. The actual value is a function of belt tension and manufacturing tolerances. Therefore it's subject to calibration. If you're not convinced, please see section 8, Appendix in [differential-ab-calibration.pdf](differential-ab-calibration.pdf) for a more thorough explanation.
+
+*"But I can just scale the part in the slicer!"* - If the `rotation_distance` is incorrect, not only is the size of the printed part wrong prior to material shrinkage; The speed that the toolhead moves and accelerates with is also wrong, resulting in the wrong amount of material being extruded per mm, with the extrusion/speed error potentially being different in the A- and B-motor directions. In addition the distance between perimeters will be wrong, further exacerbating the over-/under-extrusion error. Neither of these issues are mitigated by scaling the part in the slicer. Likewise, changing the extrusion multiplier to compensate for the *extrusion errors* introduced by incorrect `rotation_distance` values just moves the over-/under-extrusion to a different feature (e.g. single walls, supports, infill, bridges etc).
+
+It's always better to correct the error directly at the source.
+
 ## How is This Different from Other Calibration Procedures?
 Other calibration procedures typically fall into two categories:
 1. Use a dial gauge indicator to calibrate XYZ movements directly [like Teaching Tech does](https://teachingtechyt.github.io/calibration.html#xyzsteps).

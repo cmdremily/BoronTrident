@@ -10,7 +10,7 @@
 theorems-ams-bytype
 \end_modules
 \maintain_unincluded_children false
-\language english
+\language british
 \language_package default
 \inputencoding auto
 \fontencoding global
@@ -66,7 +66,7 @@ theorems-ams-bytype
 \paragraph_indentation default
 \is_math_indent 0
 \math_numbering_side default
-\quotes_style english
+\quotes_style british
 \dynamic_quotes 0
 \papercolumns 2
 \papersides 1
@@ -81,7 +81,7 @@ theorems-ams-bytype
 \begin_body
 
 \begin_layout Title
-Differential Calibration for A/B-steps on CoreXY Printers
+Differential Calibration for A/B-steps on Core XY Printers
 \end_layout
 
 \begin_layout Author
@@ -107,21 +107,21 @@ Please see the appendix for more details.
 
 ; As such it is subject to calibration, which will be discussed in this
  paper.
- Current calibration processes either rely on directly measuring toolhead
+ Current calibration processes either rely on directly measuring tool-head
  motion using a dial gauge indicator, or by printing a calibration model.
- Measuring the toolhead motion directly works poorly for CoreXY printers
- as the each motor drives the toolhead diagonally instead of parallell to
+ Measuring the tool-head motion directly works poorly for Core XY printers
+ as the each motor drives the tool-head diagonally instead of parallel to
  the X and Y axes and it's difficult to correctly position the dial gauge
- indicator colinearly to the motors' driven axis.
- On the other hand, current methods relying on calibration prints do not
+ indicator co-linearly to the motors' driven axis.
+ On the other hand, current methods that rely on calibration prints do not
  in general account for both the material shrinkage, thermal expansion of
  the print bed and the fact that the A/B-steps of the motors affect the
- toolhead motion along the diagonals instead of directly along the X and
+ tool-head motion along the diagonals instead of directly along the X and
  Y axes.
  This paper proposes a method which is specifically designed to cancel out
  errors from material shrinkage and extrusion width, as well as minimize
  the impact from thermal expansion of the print bed.
- The method can also be applied to cartesian printers with slight modification.
+ The method can also be applied to Cartesian printers with slight modification.
  
 \emph on
 If you're looking for the step-by-step tutorial, please navigate to: 
@@ -142,22 +142,22 @@ Introduction
 \end_layout
 
 \begin_layout Standard
-The proposed method calibrates the physical XY movement of the toolhead
+The proposed method calibrates the physical XY movement of the tool-head
  and is by design not intended to calibrate the actually printed parts that
  the printer produces.
  In other words, the purpose of the calibration is to make sure that the
- toolhead performs the movements in the XY plane as commanded in G-Code.
+ tool-head performs the movements in the XY plane as commanded in G-Code.
  The A/B steps is a fundamental property of the printer, if they are incorrect
  other calibrations such as skew correction and part scaling in the slicer
  can be used to attempt to correct for them.
- However, since the toolhead isn't performing the movements as intended
+ However, since the tool-head isn't performing the movements as intended
  by the slicer, these calibrations can only 
 \emph on
 indirectly
 \emph default
  adjust for the error in the A/B-steps, often with side effects such as
- perimeters being too close or too far away from eachother, or local over-/under
--extrusion.
+ perimeters being too close or too far away from each other, or local over-/unde
+r-extrusion.
 \end_layout
 
 \begin_layout Standard
@@ -171,10 +171,10 @@ Sources of Error
 
 \begin_layout Standard
 In order to produce an accurate calibration for the A/B steps we must devise
- a method of accurately measuring how far the toolhead has actually moved
+ a method of accurately measuring how far the tool-head has actually moved
  when commanded to move a specific distance.
- As measuring the toolhead movement directly on a CoreXY is difficult we
- are left with the option to indirectly calibrate the toolhead movenemt
+ As measuring the tool-head movement directly on a Core XY is difficult
+ we are left with the option to indirectly calibrate the tool-head movement
  through printing a calibration model.
  The sources of error that we have to contend with are:
 \end_layout
@@ -231,7 +231,7 @@ name "fig:Ideal-wall-to-wall-distance."
 
 \end_inset
 
-Two opposing walls without infill inbetween.
+Ideal case of a reference wall with solid infill in-between.
 \end_layout
 
 \end_inset
@@ -241,8 +241,13 @@ Two opposing walls without infill inbetween.
 
 \end_inset
 
- Let's consider the case with two opposing walls printed without any infill,
- as in figure 
+ Let's consider an ideal world where everything is exact, there are no errors
+ and no material shrinkage; In this ideal world we have a reference feature
+ of width 
+\begin_inset Formula $L$
+\end_inset
+
+ printed as in figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:Ideal-wall-to-wall-distance."
@@ -252,33 +257,87 @@ noprefix "false"
 
 \end_inset
 
-.
- The distance between the outer walls is 
-\begin_inset Formula $L$
-\end_inset
-
-, the distance from centre to centre of the exterior perimeter is 
+ with solid infill and outer perimeter first so the infill doesn't affect
+ the outer most perimeter.
+ We can express the width of this reference feature in terms of the distance
+ the tool-head moves between the external perimeter, 
 \begin_inset Formula $X$
 \end_inset
 
-, and the extrusion width is 
+, and the width of the outer extrusion, 
 \begin_inset Formula $W$
 \end_inset
 
-.
- These quantities trivially relate to each other as:
+, as:
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{equation}
-L=X+2\frac{W}{2}=X+W.\label{eq:distance}
+L=X+2\frac{W}{2}=X+W.\label{eq:ideal_distance}
 \end{equation}
 
 \end_inset
 
- However, if we have two pairs of such walls with different dimensions,
- call them: 
+
+\end_layout
+
+\begin_layout Standard
+In reality, the tool-head movement will be incorrect by a scale factor 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ on its moved distance, the whole model will shrink by a factor 
+\begin_inset Formula $\delta$
+\end_inset
+
+, the extrusion width will be incorrect by a scale factor 
+\begin_inset Formula $\alpha$
+\end_inset
+
+, and finally we will bake all random error sources (impact from filament
+ diameter variance after shrinkage, measurement error, etc.) into one value
+ we call 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+.
+ In other words, we will have a measured value 
+\begin_inset Formula $l$
+\end_inset
+
+ of the width of the reference dimension:
+\begin_inset Formula 
+\begin{equation}
+l=\delta\left(X\lambda+W\alpha\right)+\epsilon\label{eq:measured_distance}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Let's assume we have two such reference features of different ideal lengths
+ 
+\begin_inset Formula $L_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $L_{2}$
+\end_inset
+
+with matching measured values 
+\begin_inset Formula $l_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $l_{2}$
+\end_inset
+
+.
+ As the only thing differing in the ideal case is the tool-head movement
+ we have: 
 \begin_inset Formula $L_{1}=X_{1}+W$
 \end_inset
 
@@ -286,11 +345,26 @@ L=X+2\frac{W}{2}=X+W.\label{eq:distance}
 \begin_inset Formula $L_{2}=X_{2}+W$
 \end_inset
 
-, then by taking the difference as:
+ for the ideal features and 
+\begin_inset Formula $l_{1}=\delta\left(X_{1}\lambda+W\alpha\right)+\epsilon_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $l_{1}=\delta\left(X_{1}\lambda+W\alpha\right)+\epsilon_{2}$
+\end_inset
+
+ where 
+\begin_inset Formula $\epsilon$
+\end_inset
+
+ is different between the measured values due to its random nature.
+ If we now take the difference between lengths of the two reference features
+ the two we get:
 \begin_inset Formula 
-\begin{equation}
-\Delta L_{1,2}=L_{1}-L_{2}=X_{1}-X_{2}\label{eq:differential}
-\end{equation}
+\begin{multline}
+\Delta L_{1,2}=L_{1}-L_{2}=X_{1}-X_{2}\\
+\Delta l_{1,2}=l_{1}-l_{2}=\left(X_{1}-X_{2}\right)\lambda\delta+\left(\epsilon_{1}-\epsilon_{2}\right)\label{eq:differential}
+\end{multline}
 
 \end_inset
 
@@ -298,7 +372,7 @@ we see that the effect of the extrusion width
 \begin_inset Formula $W$
 \end_inset
 
- is cancelled out.
+ is cancelled out regardless of any scale errors.
  We will call this a 
 \begin_inset Quotes eld
 \end_inset
@@ -310,6 +384,10 @@ differential measurement
  going forward.
  In fact, we can see that any constant that is added to 
 \begin_inset Formula $L$
+\end_inset
+
+ and 
+\begin_inset Formula $l$
 \end_inset
 
  will be cancelled out in 
@@ -338,6 +416,11 @@ noprefix "false"
 \end_inset
 
 .
+ It's worth noting that this including bias errors in the measuring of 
+\begin_inset Formula $L$
+\end_inset
+
+.
  This leads us to our first lemma:
 \end_layout
 
@@ -349,7 +432,7 @@ name "differential-lemma"
 \end_inset
 
 Any error affecting the measured length 
-\begin_inset Formula $L$
+\begin_inset Formula $l$
 \end_inset
 
  between the outer edges of two exterior perimeters, which is independent
@@ -362,7 +445,7 @@ Any error affecting the measured length
  in 
 \begin_inset CommandInset ref
 LatexCommand eqref
-reference "eq:distance"
+reference "eq:ideal_distance"
 plural "false"
 caps "false"
 noprefix "false"
@@ -370,22 +453,22 @@ noprefix "false"
 \end_inset
 
 ), and which equally affects two such measured lengths: 
-\begin_inset Formula $L_{1}$
+\begin_inset Formula $l_{1}$
 \end_inset
 
  and 
-\begin_inset Formula $L_{2}$
+\begin_inset Formula $l_{2}$
 \end_inset
 
  will be cancelled out when taking the difference between those: 
-\begin_inset Formula $\Delta L_{1,2}=L_{1}-L_{2}$
+\begin_inset Formula $\Delta l_{1,2}=l_{1}-l_{2}$
 \end_inset
 
 .
  In other words, any constant errors added to 
 \begin_inset CommandInset ref
 LatexCommand eqref
-reference "eq:distance"
+reference "eq:measured_distance"
 plural "false"
 caps "false"
 noprefix "false"
@@ -406,61 +489,58 @@ noprefix "false"
 \end_layout
 
 \begin_layout Standard
-This is a key result that will allow us to cancel out the error from extrusion
- width and material shrinkage.
+If we then take the ratio of the differential measurements between and the
+ measured length and the ideal lengths, we get:
 \end_layout
 
 \begin_layout Standard
-In the ideal case, 
-\begin_inset Formula $X$
-\end_inset
-
- in 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:distance"
-plural "false"
-caps "false"
-noprefix "false"
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta l_{1,2}}{\Delta L_{1,2}}=\frac{\left(X_{1}-X_{2}\right)\lambda\delta+\left(\epsilon_{1}-\epsilon_{2}\right)}{X_{1}-X_{2}}=\lambda\delta+\frac{\left(\epsilon_{1}-\epsilon_{2}\right)}{X_{1}-X_{2}}\overset{\eqref{eq:differential}}{=}\lambda\delta+\frac{\left(\epsilon_{1}-\epsilon_{2}\right)}{\Delta L_{1,2}}\label{eq:scale-factor}
+\end{equation}
 
 \end_inset
 
- is equal to the distance that the toolhead moves between these two perimeters,
- and 
-\begin_inset Formula $W$
-\end_inset
-
- is the extrusion width set in the slicer.
- However, in reality the toolhead doesn't move the exact intended distance,
- nor is the extrusion width exactly 
-\begin_inset Formula $W$
-\end_inset
-
-.
- We call these non-ideal values as: 
-\begin_inset Formula $x=X\lambda$
-\end_inset
-
- where 
+which gives the product of the tool-head motion error scale factor, 
 \begin_inset Formula $\lambda$
 \end_inset
 
- is a scale factor, and 
-\begin_inset Formula $w=W\delta+\epsilon$
-\end_inset
-
- where 
+ and the material shrinkage factor 
 \begin_inset Formula $\delta$
 \end_inset
 
- is a scale error on the extrusion width and 
-\begin_inset Formula $\epsilon$
+, and an error term: 
+\begin_inset Formula $\frac{\left(\epsilon_{1}-\epsilon_{2}\right)}{\Delta L_{1,2}}$
 \end_inset
 
- is any error which can be described by lemma 
+.
+ Unfortunately, we do not directly obtain 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ from 
 \begin_inset CommandInset ref
-LatexCommand ref
-reference "differential-lemma"
+LatexCommand eqref
+reference "eq:scale-factor"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+, but we will address this by design of the calibration model to decouple
+ 
+\begin_inset Formula $\delta$
+\end_inset
+
+ from 
+\begin_inset Formula $X$
+\end_inset
+
+ in section 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "sec:Designing-a-Calibration"
 plural "false"
 caps "false"
 noprefix "false"
@@ -468,71 +548,6 @@ noprefix "false"
 \end_inset
 
 .
- We then get measured distance 
-\begin_inset Formula $l$
-\end_inset
-
- in the non-ideal case: 
-\begin_inset Formula 
-\begin{equation}
-l=x+2\frac{w}{2}=x+w
-\end{equation}
-
-\end_inset
-
-and of course:
-\begin_inset Formula 
-\begin{equation}
-\Delta l_{1,2}=l_{1}-l_{2}=x_{1}-x_{2}.
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-If we then take the ratio of the differential non-ideal measurement and
- the ideal differential measurement:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\begin{equation}
-\frac{\Delta l_{1,2}}{\Delta L_{1,2}}=\frac{x_{1}-x_{2}}{X_{1}-X_{2}}=\frac{X_{1}\lambda-X_{2}\lambda}{X_{1}-X_{2}}=\lambda\label{eq:scale-factor}
-\end{equation}
-
-\end_inset
-
-we get the scale error on the toolhead movement.
- We formulate this into our second lemma:
-\end_layout
-
-\begin_layout Lemma
-\begin_inset CommandInset label
-LatexCommand label
-name "scale-factor-lemma"
-
-\end_inset
-
-By taking two differential measurements along the same axis, the ratio between
- them will produce the scale error of the toolhead movement along that axis.
-\end_layout
-
-\begin_layout Standard
-We now have everything we need to design a calibration model which is immune
- to error in extrusion width (but not inconsistency) and material shrinkage
- as long as lemma 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "differential-lemma"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
- applies.
 \end_layout
 
 \begin_layout Section
@@ -549,7 +564,7 @@ Designing a Calibration Model
 \begin_inset Float figure
 wide false
 sideways false
-status collapsed
+status open
 
 \begin_layout Plain Layout
 \begin_inset Graphics
@@ -585,7 +600,7 @@ One extrusion wide lines to measure
 
 \end_inset
 
-Consider a calibration model that consists of three parallell, single width,
+Consider a calibration model that consists of three parallel, single width,
  single layer extrusions as in figure 
 \begin_inset CommandInset ref
 LatexCommand ref
@@ -597,7 +612,11 @@ noprefix "false"
 \end_inset
 
 .
- It's obvious that the requirements for lemma 
+ In essence we have two reference features (indicated by their dimensions)
+ but without any infill in-between.
+ It's clear that material shrinkage cannot affect the distance between the
+ centre lines of the extrusions, it can only affect the extrusion width,
+ and by lemma 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "differential-lemma"
@@ -607,20 +626,77 @@ noprefix "false"
 
 \end_inset
 
- are met when taking the differential measurement between the two line pairs
- as indicated; Material shrinkage will affect all lines homogeneously and
- the distance between the lines isn't affected by material shrinkage, as
- they are trivial lines perpendicular to the measuring direction.
+ we know that this doesn't matter for our results; However, thermal expansion
+ of the bed now takes the place of the material shrinkage factor, 
+\begin_inset Formula $\delta$
+\end_inset
+
+ in 
+\begin_inset CommandInset ref
+LatexCommand eqref
+reference "eq:differential"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ By making sure that the bed is at thermal equilibrium before the print
+ starts and measuring 
+\begin_inset Formula $l_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $l_{2}$
+\end_inset
+
+ with the bed at temperature, we can guarantee that 
+\begin_inset Formula $\delta$
+\end_inset
+
+ is close enough to 1 for the error introduced into the calculated value
+ of 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ by the temperature fluctuation of the bed temperature to be negligible
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+For a flexible stainless steel print sheet with a typical thermal expansion
+ coefficient of 
+\begin_inset Formula $14E^{-6}$
+\end_inset
+
+ a bed temperature fluctuation of 1° K would result in 
+\begin_inset Formula $\delta=1.000014$
+\end_inset
+
+, or an error of 5 µm across a full 350 mm bed, or 500 nm if fluctuation
+ can be kept below 0.1° K.
+\end_layout
+
+\end_inset
+
+.
+ Thus we can directly obtain 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ with the random error term:
 \end_layout
 
 \begin_layout Standard
-However, this simple calibration model while theoretically useful, is unpractica
-l.
- Measuring single extrusions accurately is difficult as there is very little
- for the jaws of the calipers to align on, and making the extrusions taller
- just means that they will delaminate from the bed when measuring or deflect
- too easily, again making measuring difficult.
- A better calibration model is needed.
+\begin_inset Formula 
+\[
+\frac{\Delta l_{1,2}}{\Delta L_{1,2}}\approx\lambda+\frac{\left(\epsilon_{1}-\epsilon_{2}\right)}{\Delta L_{1,2}}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -658,15 +734,25 @@ Improved calibration model for a single axis.
 
 \end_layout
 
-\begin_layout Plain Layout
-
-\end_layout
-
 \end_inset
 
-Inspired by the simple three parallell lines model above, we create a more
- rigid model that will be more practical for measurements as shown in figure
- 
+However, this simple calibration model while theoretically useful, is unpractica
+l.
+ Measuring single extrusions accurately is difficult as there is very little
+ for the jaws of the calipers to align on, and making the extrusions taller
+ just means that they will delaminate from the bed when measuring or deflect
+ too easily, again making measuring difficult.
+ Not to mention, having the calipers this close to a potentially hot bed
+ for the time it takes to measure can cause them to thermally expand and
+ measure incorrectly, they're typically calibrated for measuring at 20°
+ C.
+ A better calibration model is needed.
+\end_layout
+
+\begin_layout Standard
+Inspired by the simple three parallel lines model above, we create a more
+ rigid model with three wide, parallel pylons that will be more practical
+ for measurements as shown in figure 
 \begin_inset CommandInset ref
 LatexCommand ref
 reference "fig:Improved-calibration-model"
@@ -677,13 +763,36 @@ noprefix "false"
 \end_inset
 
 .
+ As long as each of the pylons is independent, printed as solid material,
+ and symmetrical along the major axis, then for the purposes of lemma 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "differential-lemma"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ we can think of them as single extrusions; They will shrink equally on
+ both sides of the measurement surfaces (blue in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:Improved-calibration-model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+) and independently of the distance between the centres of the pylons.
 \end_layout
 
 \begin_layout Standard
 Note that built-in brims are added to keep the pylons stable on the build
  plate during measuring.
- The brims are chosen so that they never touch another pylon's brim, therefore
- making sure that each pylon's shrinkage will be independent of each other.
+ The brims are chosen so that they never touch another pylon's brim, to
+ maintain the pylon's independence.
  Each pylon should be printed with external perimeters first and have the
  seams positioned away from the measurement surfaces (marked blue in 
 \begin_inset CommandInset ref
@@ -968,7 +1077,7 @@ noprefix "false"
 \end_inset
 
  is 0.01mm), and the error from the instrument is 0.015 mm, and there's 0.005
- mm error from the filamen inconsistency, then the total error is: 
+ mm error from the filament inconsistency, then the total error is: 
 \begin_inset Formula $2\left(0.015+0.005\right)+0.01=0.05$
 \end_inset
 
@@ -988,7 +1097,7 @@ The calibration model as described above should be aligned so that the scale
 \end_inset
 
  is measured in the primary direction of the motors.
- This means that for a cartesian printer, the measurement directions should
+ This means that for a Cartesian printer, the measurement directions should
  be axis aligned.
  For a Core XY printer the calibration model should be on a 45° diagonal
  as each of the motor A-/B-motors drive a diagonal, see figure 
@@ -1123,7 +1232,7 @@ Make sure belts are equally and properly tensioned, changing belt tensions
 \end_layout
 
 \begin_layout Itemize
-Clear any previous skewcorrections.
+Clear any previous skew corrections.
  On Core XY printers, the skew can often be corrected for solely by the
  steps calibration in this document.
  Re-do skew correction after steps have been calculated.
@@ -1158,7 +1267,7 @@ Reduce extrusion multiplier slightly.
 
 \begin_layout Itemize
 Disable cooling fan and use the lowest temperatures possible to make shrinkage
- ocurr uniformly and minimally.
+ occur uniformly and minimally.
 \end_layout
 
 \end_deeper

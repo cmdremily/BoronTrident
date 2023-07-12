@@ -22,7 +22,8 @@ Below is a non-exhaustive list of things that will get you into various kinds of
 ## When wiring
 1. Not checking for short circuits before powering on
     * A short circuit between any combination of Ground, 5V, 12V, 24V, Live, Neutral or PE will either release the magic smoke or cause a breaker to pop, or cause a fire later.
-    * Before powering on, use a multimeter in resistance mode (100K range if applicable), between each pair of the above, make sure you see at least 1 KOhm.
+    * Before powering on, use a multimeter in resistance mode, between each pair of the above, make sure you see at a few hundred ohms
+      * Pay attention to which resistance range is selected on your multimeter if applicable. OL means open line, i.e. more resistance than the range can mean. Some multimeters show "error" or "1  ." or some thing that's not a number to mean out of range.
       * Do not use continuity mode for this
 1. Confusing "Ground", "Protective Earth" and "Neutral"
     * None of these should ever be connected together, magic smoke will escape and/or a fuse will pop, guaranteed.

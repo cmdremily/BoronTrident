@@ -1,7 +1,7 @@
 # Don't drive IO pins on unpowered devices
 
 ## Wat? What does this even mean?
-If you open up the data sheet of just about any Integrated Circuit (IC) chip or MCU you will a section that looks something like this:
+If you open up the data sheet of just about any Integrated Circuit (IC) chip or MCU you will see a section that looks something like this:
 
 ![datasheet](images/pin_voltage.png)
 

@@ -7,7 +7,7 @@ If you open up the data sheet of just about any Integrated Circuit (IC) chip or 
 
 which says that the voltage on any pin may not be higher than the chips supply voltage (Vcc) + 0.5 V. The exact value varies between chips, and is typically between 0.15 V and 0.6 V.
 
-In particular what this means, is that if the IC or MCU isn't powered, you must make sure that nothing is trying to communicate with it via UART, I2C, SPI, USB, or otherwise applies a voltage on any input pin of the chip.
+In particular what this means, is that if the IC or MCU isn't powered, you must make sure that nothing is trying to communicate with it via UART, I2C, SPI, USB, or otherwise applies a voltage on any non-power pin of the chip.
 
 Some chips or pins can be specifically designed to handle voltages above Vcc (like the RESET pin on the ATmega 328p, or your TV's antennae connection). But that's only the case if it's explicitly required for the device to function correctly.
 

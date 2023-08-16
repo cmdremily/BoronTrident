@@ -68,10 +68,10 @@ Below is a non-exhaustive list of things that will get you into various kinds of
     * Your measurements will be incorrect garbage, don't do it.
 1. Reading the result incorrectly.
    * Pay attention to the SI prefix (especially m vs. M). It's easy to fall into the trap of assuming the prefix is what you expect and only looking at the number.
-   * When measuring resistance, results such as 0L and OVLD do not indicate 0 Ohms or a malfunction, but rather that the resistance is larger than the meter can measure, which, for normal meters, usually means it's basically an open. 
+   * When measuring resistance, results such as 0L and OVLD do not indicate 0 Ohms or a malfunction, but rather that the resistance is larger than the meter can measure, which, for normal meters, usually means it's basically an open circuit (whatever things you probed with the leads are not electrically connected to each other in a meaningful way). 
 1. Using a multimeter incorrectly
    * Multimeters all operate slightly differently but work on the same general principle
    * Make sure you are set to measure the correct property before you connect the probes. Especially make sure you are not set in current mode whem measuring voltage. This shorts the nets between your probe and will at best blow your meter's fuse. Some multimeters have a special plug for measuring higher currents. This is always connected to a short between that plug and COM, so it will cause a short when you probe even if the meter is set to voltage or resistance mode.
    * Use continuity only for checking if wires are in general connected, not to see if they conduct particularly well. This is best used when you cannot see the meter screen while probing and need an auditory cue instead. If you are unsure what this means, do not use continuity mode. 
    * If your meter does not auto-range, be sure to select the range that is appropriate for the value you expect to see. If you are unsure what range is correct, start at the highest and work your way down until you get a meaningful reading. 
-   * If you need help with your particular meter, ask for help
+   * If you need help with your particular meter, ask for help.

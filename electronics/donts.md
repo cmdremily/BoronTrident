@@ -11,6 +11,9 @@ Below is a non-exhaustive list of things that will get you into various kinds of
     * Do not assume wires are coloured correctly or consistently. Always trace or probe power wires before making modifications or connecting a new device. 
 1. Hot-plugging connectors that aren't designed for it
     * Only connectors that are designed for it (like USB, SATA etc) may be hot-plugged. These cables are designed so that ground and power make electrical contact before data pins do. If a data pin is high, and connects after ground, but before power, the chip can be destroyed.
+1. Restoring power after a power fault, without first establishing the fault has been cleared.
+   * This is a good way to destructivly test how many times you can abuse your electronics before they die. The best case is whatever protection saved you the first time saves you again and you learn nothing, but the worst case is whatever protection saved you the first time *doesn't* save you again and you learn about zappy-zappy going where there's not supposed to be zappy-zappy.
+   * If it's a mains-related power fault, same as above except you also get to learn about electrocution, arcing, and/or fire. 
 1. Order electrical components of Amazon/AliExpress
     * Many (unofficial) sellers don't know what they're selling. It's easy to end up with counterfeit or wrong parts. Prefer to order from reputable electronics distributors like DigiKey, Mouser and RS.
     * If it doesn't come with a datasheet, it's sus. The datasheet should be available before you buy the part. 
@@ -63,6 +66,9 @@ Below is a non-exhaustive list of things that will get you into various kinds of
     * If you're reading this list, you probably can't do this safely.
 1. Using a multimeter in resistance mode on an energized circuit
     * Your measurements will be incorrect garbage, don't do it.
+1. Reading the result incorrectly.
+   * Pay attention to the SI prefix (especially m vs. M). It's easy to fall into the trap of assuming the prefix is what you expect and only looking at the number.
+   * When measuring resistance, results such as 0L and OVLD do not indicate 0 Ohms or a malfunction, but rather that the resistance is larger than the meter can measure, which, for normal meters, usually means it's basically an open circuit (whatever things you probed with the leads are not electrically connected to each other in a meaningful way). 
 1. Using a multimeter incorrectly
    * Multimeters all operate slightly differently but work on the same general principle
    * Make sure you are set to measure the correct property before you connect the probes. Especially make sure you are not set in current mode whem measuring voltage. This shorts the nets between your probe and will at best blow your meter's fuse. Some multimeters have a special plug for measuring higher currents. This is always connected to a short between that plug and COM, so it will cause a short when you probe even if the meter is set to voltage or resistance mode.

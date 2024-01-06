@@ -49,6 +49,7 @@ TBD
     * Lower the extrusion multiplier by 5% to make sure the model isn't over extruded in the interior which could cause the reference dimensions to bulge and affect the accuracy of the measurement.
     * Let the model cool slowly to room temperature.
     * Make sure it is free from warping, re-print if necessary.
+    * Print slowly for maximum accuracy, 60 mm/s is good a safe default.
 1. Let cool slowly to room temperature.
 1. Before taking it off the build place, mark the X and Y axis directions on the part.
 1. Measure the 150 mm and 5 mm reference dimensions as indicated in ![reference dimensions](images/shrinkage-square.png) and enter into the spreadsheet. 
@@ -70,6 +71,7 @@ If the X and Y scale factors are notably different, something has gone wrong. Re
     * Use a wide extrusion for best accuracy (150% nozzle size is good).
     * Use thin layers, 0.01 mm.
     * Use **vase mode**.
+    * Print slowly for maximum accuracy, 60 mm/s is good a safe default.
     * Use a generous brim and be prepared to let it cool slowly to room temperature.
         * Any warping in the part will ruin the calibration.
 1. Let cool slowly to room temperature.

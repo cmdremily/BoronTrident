@@ -302,9 +302,9 @@ Instead, we will calibrate the extrusion multiplier by printing a test cube
 \begin_layout Standard
 Attempting to do this with consumer or prosumer calipers that typically
  have a precision 0.01 mm will produce unreliable results as the even if
- the calipers have an accuracy of 0.02 mm (which is good), when measuring
- an extrusion of width 0.5 mm, the worst case error is 
-\begin_inset Formula $\frac{0.02}{0.5}=4\%$
+ the calipers have an accuracy of 0.02 mm, when measuring an extrusion of
+ width 0.5 mm, the worst case error is 
+\begin_inset Formula $\frac{\pm0.02}{0.5}=\pm4\%$
 \end_inset
 
 , this is larger than the typical adjustments of 1-2% that need to be made
@@ -312,10 +312,17 @@ Attempting to do this with consumer or prosumer calipers that typically
  Therefore we must use a micrometer for measuring the wall.
  A good micrometer available to consumers might have an accuracy of 0.5 µm
  and a precision of 1 µm, resulting in a worst case error of 
-\begin_inset Formula $\frac{0.5}{500}=0.1\%$
+\begin_inset Formula $\frac{\pm0.5}{500}=\pm0.1\%$
 \end_inset
 
  which is good enough for what we're doing.
+ The only exception is if your calipers have a calibration certificate that
+ says accuracy is 0.00 mm on sizes smaller than 1 mm (i.e.
+ 0.005mm, 50µm by rounding rules), in this case the error is 
+\begin_inset Formula $\frac{\pm0.005}{0.5}=\pm1\%$
+\end_inset
+
+ which is barely good enough.
 \end_layout
 
 \begin_layout Standard

@@ -2,7 +2,8 @@
 
 Whoa, this page is way too long, I'm not reading all that! 
 
-**TL;DR: It good, use a diagonally opposite pair of conductors for CAN_H/CAN_L.**
+**TL;DR: It good, use a diagonally opposite pair of conductors for CAN_H/CAN_L like in the picture.**
+![diagonal pair](images/digaonally_opposite_pair.png)
 
 ## A cable is a cable, why should I care?
 When transmitting high frequency signals (around 30 KHz and above) through a cable, we start to run into signal quality issues due to something that's called "impedance mismatch" (among other things). Impedance mismatch causes a fraction of the transmitted signal energy to be reflected back to the sender with a slight delay.

@@ -1,0 +1,678 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\begin_modules
+theorems-ams-bytype
+\end_modules
+\maintain_unincluded_children false
+\language british
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\spacing single
+\use_hyperref false
+\papersize a4paper
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\biblio_style plain
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style british
+\dynamic_quotes 0
+\papercolumns 2
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Title
+(DRAFT) Accurate Material Shrinkage and Extrusion Multiplier
+\end_layout
+
+\begin_layout Author
+CmdrEmily
+\end_layout
+
+\begin_layout Date
+2024-01-05
+\end_layout
+
+\begin_layout Abstract
+The dimensional accuracy of FDM 3D printed parts depends on many factors.
+ Among those are material shrinkage and extrusion multiplier, the accurate
+ computation of which we will discuss in this paper.
+ We propose a method that computes material shrinkage correctly even in
+ the presence of a bias error in extrusion rate.
+ 
+\emph on
+If you're looking for the step-by-step tutorial, please navigate to: 
+\begin_inset CommandInset href
+LatexCommand href
+name "github.com/cmdremily/BoronTrident/"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/adv-material-calibration.md"
+literal "false"
+
+\end_inset
+
+, this document aims to prove the correctness and accuracy of the method
+ rather than being a calibration guide.
+\end_layout
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Standard
+Commonly calibration procedures for material shrinkage consist of measuring
+ a reference dimension on a calibration print and dividing the measured
+ value over the reference value and using that as a scale factor.
+ This has issues, most notably that the printed reference dimension has
+ other sources of error, mainly extrusion width and errors from the XY motion
+ system.
+ 
+\end_layout
+
+\begin_layout Standard
+We will introduce a differential measurement method that cancels out the
+ error introduced from extrusion width and only measures the compound of
+ the XY motion system and the material shrinkage.
+ Given that the XY motion system has previously been calibrated by the procedure
+ here: 
+\begin_inset CommandInset href
+LatexCommand href
+name "github.com/cmdremily/BoronTrident/"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/xy-differential-calibration.md"
+literal "false"
+
+\end_inset
+
+, then the material shrinkage is obtained directly.
+\end_layout
+
+\begin_layout Section
+Prerequisites
+\end_layout
+
+\begin_layout Itemize
+A printer that has an accurately calibrated XY motion system.
+\end_layout
+
+\begin_layout Itemize
+Filament to calibrate
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+The filament must already have a good value calibrated for pressure advance.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+A pair of 150 mm digital calipers with a precision of 0.01 mm or better.
+\end_layout
+
+\begin_layout Itemize
+A micrometer with a precision of 1 µm or better.
+\end_layout
+
+\begin_layout Section
+Method Overview
+\end_layout
+
+\begin_layout Standard
+For brevity this paper builds heavily upon the foundations laid out in in
+ the previous paper: 
+\begin_inset CommandInset href
+LatexCommand href
+name "Differential Calibration for A/B-steps on Core XY Printers"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/differential-ab-calibration.pdf"
+literal "false"
+
+\end_inset
+
+, please review that paper before reading this.
+\end_layout
+
+\begin_layout Standard
+To recap, given two reference dimensions on the same axis, 
+\begin_inset Formula $L_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $L_{2}$
+\end_inset
+
+, their respective measured lengths 
+\begin_inset Formula $l_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $l_{2}$
+\end_inset
+
+ and associated errors 
+\begin_inset Formula $\epsilon_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $\epsilon_{2}$
+\end_inset
+
+, we can compute the scale error factor introduced from material shrinkage
+ 
+\begin_inset Formula $\delta$
+\end_inset
+
+ and XY motion scale error factor 
+\begin_inset Formula $\lambda$
+\end_inset
+
+ as: 
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\begin{equation}
+\frac{\Delta l_{1,2}}{\Delta L_{1,2}}=\lambda\delta+\frac{\epsilon_{1}-\epsilon_{2}}{\Delta L_{1,2}}.\label{eq:scale-factor}
+\end{equation}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Material Shrinkage
+\end_layout
+
+\begin_layout Standard
+Assuming an accurately calibrated XY motion system as per the above paper,
+ we have 
+\begin_inset Formula $\lambda\approx1$
+\end_inset
+
+.
+ This means that the material shrinkage, 
+\begin_inset Formula $\delta$
+\end_inset
+
+ can be directly computed from equation 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "eq:scale-factor"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+, provided a suitable calibration model which we will outline in section
+ 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "sec:shrinkage-model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Extrusion Multiplier
+\end_layout
+
+\begin_layout Standard
+While it's possible to compute, to directly obtain the extrusion scale factor
+ equations in 
+\begin_inset CommandInset href
+LatexCommand href
+name "Differential Calibration for A/B-steps on Core XY Printers"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/differential-ab-calibration.pdf"
+literal "false"
+
+\end_inset
+
+, the results would be poor as the measurement error dominates the result.
+\end_layout
+
+\begin_layout Standard
+Instead, we will calibrate the extrusion multiplier by printing a test cube
+ in single wall vase mode and directly measure the wall thickness and compensate
+ for the known material shrinkage.
+\end_layout
+
+\begin_layout Standard
+Attempting to do this with consumer or prosumer calipers that typically
+ have a precision 0.01 mm will produce unreliable results as the even if
+ the calipers have an accuracy of 0.02 mm (which is good), when measuring
+ an extrusion of width 0.5 mm, the worst case error is 
+\begin_inset Formula $\frac{0.02}{0.5}=4\%$
+\end_inset
+
+, this is larger than the typical adjustments of 1-2% that need to be made
+ to the extrusion multiplier.
+ Therefore we must use a micrometer for measuring the wall.
+ A good micrometer available to consumers might have an accuracy of 0.5 µm
+ and a precision of 1 µm, resulting in a worst case error of 
+\begin_inset Formula $\frac{0.5}{500}=0.1\%$
+\end_inset
+
+ which is good enough for what we're doing.
+\end_layout
+
+\begin_layout Standard
+If we let 
+\begin_inset Formula $E$
+\end_inset
+
+ be the extrusion multiplier that would have produced an extrusion with
+ the desired width 
+\begin_inset Formula $W$
+\end_inset
+
+, then 
+\begin_inset Formula 
+\[
+W=E\cdot F
+\]
+
+\end_inset
+
+ where 
+\begin_inset Formula $F$
+\end_inset
+
+ is a constant determined by the current E-steps and extruder geometry.
+ The measured width of the extrusion will be:
+\begin_inset Formula 
+\[
+w=\delta(E_{c}\cdot F)+\epsilon
+\]
+
+\end_inset
+
+ where 
+\begin_inset Formula $E_{c}$
+\end_inset
+
+ is the current extrusion multiplier.
+ Using these two expressions, we solve for 
+\begin_inset Formula $E$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\begin{array}{c}
+\frac{w-\epsilon}{\delta}=\frac{E_{c}W}{E}\\
+E=\frac{\delta E_{c}W}{w-\epsilon}
+\end{array}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+A note on other methods of calibrating extrusion multiplier
+\end_layout
+
+\begin_layout Section
+Designing Calibration Models
+\end_layout
+
+\begin_layout Subsection
+\begin_inset CommandInset label
+LatexCommand label
+name "sec:shrinkage-model"
+
+\end_inset
+
+Material Shrinkage
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename C:/Users/CmdrEmily/Source/repos/borontrident/calibration/images/shrinkage-square.png
+	width 99col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:shrinkage-model"
+
+\end_inset
+
+Calibration 
+\begin_inset Quotes bld
+\end_inset
+
+square
+\begin_inset Quotes brd
+\end_inset
+
+ for material shrinkage.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename C:/Users/CmdrEmily/Source/repos/borontrident/calibration/images/shrinkage-square-tab-alignment.jpg
+	width 99col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:jaw-alignment"
+
+\end_inset
+
+Tabs for caliper alignment.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+The calibration model must have two reference dimensions in each direction.
+ We minimize the error to the computed shrinkage factor by maximizing the
+ difference between 
+\begin_inset Formula $L_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $L_{2}$
+\end_inset
+
+.
+ We pick 
+\begin_inset Formula $L_{1}=150$
+\end_inset
+
+ mm as that's a common maximum measurable size for consumer calipers, we
+ arbitrarily pick 
+\begin_inset Formula $L_{2}=5$
+\end_inset
+
+ mm as a 
+\begin_inset Quotes bld
+\end_inset
+
+small
+\begin_inset Quotes brd
+\end_inset
+
+ value.
+\end_layout
+
+\begin_layout Standard
+We propose a right angle bracket as in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:shrinkage-model"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+.
+ We make use of structural components for the small reference dimensions
+ for the opposite axis to save on material.
+ There are additional dimensions indicated that can be used for redundancy.
+ The 15 mm wide, 85 mm long tabs on the sides allow the part to be easily
+ aligned in the jaws of a caliper as in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:jaw-alignment"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ for repeatable and accurate measurements.
+\end_layout
+
+\begin_layout Standard
+If the pressure advance setting is too low, then the corners can buldge
+ slightly affecting the accuracy of the calibration.
+ Inspect the model for any bulging around corners prior to measuring and
+ adjust pressure advance up temporarily if necessary.
+ Other than the convenient tabs and effective use of material there is nothing
+ remarkable about this calibration model.
+ Use thin layers for printing this model reduce the impact from filament
+ inconsistency by spreading the inconsistency over longer distances and
+ stacking up more layers.
+ The 5 mm beams must be solid material to guarantee homogeneous shrinkage.
+ Let cool slowly to room temperature before measuring.
+\end_layout
+
+\begin_layout Subsection
+Extrusion Multiplier
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Graphics
+	filename C:/Users/CmdrEmily/Source/repos/borontrident/calibration/images/extrusion multiplier cube.png
+	width 99col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:em-cal"
+
+\end_inset
+
+Extrusion multiplier calibration cube with notches to indicate where to
+ measure (dotted circles).
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+When designing a calibration print for extrusion multiplier we want to minimize
+ the impact of errors in the pressure advance calibration and in filament
+ diameter variance.
+ With this in mind, a cube with rounded walls as in figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:em-cal"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+ allows the toolhead to make a smooth transition between the sides, minimizing
+ the impact from errors in pressure advance impacting the measurement.
+ By using thin layers (0.01 mm) we attempt to spread out the variance in
+ filament diameter over all four sides of the cube, producing more even
+ wall thickness between the sides.
+ A generous brim is highly recommended as any warping may cause the walls
+ to become thicker than intended.
+ We add notches along the bottom to give a visual aid of where to measure.
+ Let cool slowly to room temperature before measuring.
+\end_layout
+
+\begin_layout Section
+Error Analysis
+\end_layout
+
+\begin_layout Standard
+As this per material calibration is done on top of the XY motion calibration
+ on the same printer, it will by nature cancel out small errors in the XY
+ motion by compensting the material shrinkage factor slightly in either
+ direction.
+ Meaning that the dimensional accuracy of the final part may be higher than
+ initially indicated by the XY calibration.
+ It is still necessary to perform the XY calibration for reasons mentioned
+ in 
+\begin_inset CommandInset href
+LatexCommand href
+name "Differential Calibration for A/B-steps on Core XY Printers"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/differential-ab-calibration.pdf"
+literal "false"
+
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Filament inconsistency, motion precision and measurement error still affect
+ the calibration part.
+ But bed expansion does not, as the part will simply delaminate from the
+ bed as it contracts when cooling instead of the part shrinking.
+\end_layout
+
+\begin_layout Standard
+Because the measurements for the material shrinkage calibration are taken
+ of a calibration part that already has the error in the XY calibration
+ baked in, the material shrinkage factor will end up compensating for the
+ slight error in the XY calibration.
+ This means that the error factors from these two calibrations do not compound,
+ but rather the dimensional inaccuracy of the final part is bounded by the
+ error sources of the calibration in this paper.
+\end_layout
+
+\begin_layout Standard
+With the same values as in 
+\begin_inset CommandInset href
+LatexCommand href
+name "Differential Calibration for A/B-steps on Core XY Printers"
+target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/differential-ab-calibration.pdf"
+literal "false"
+
+\end_inset
+
+, that error is bounded by 35 µm.
+ If the same instrument is used for calibration and verification, the indicated
+ error will be approximately 6 µm, assuming no random factor affecting the
+ measurement.
+\end_layout
+
+\end_body
+\end_document

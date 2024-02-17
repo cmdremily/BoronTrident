@@ -1,7 +1,7 @@
 # (Work in Progress) Material Shrinkage and Extrusion Multiplier Tuning
 
 ## Why is This Calibration Necessary?
-After correcting for the mechanical accuracy of the tool head movement in [XY Differential Calibration](xy-differential-calibration.md), in order to achieve accurate parts, additional factors must be accounted for.Among those are the extrusion multiplier and compensating for the shrinkage of the material as it cools down, having been thermally expanded during extrusion.
+After correcting for the mechanical accuracy of the tool head movement in [XY Differential Calibration](xy-differential-calibration.md), in order to achieve accurate parts, additional factors must be accounted for. Among those are the extrusion multiplier and compensating for the shrinkage of the material as it cools down, having been thermally expanded during extrusion.
 
 ## How is This Different from Other Calibration Procedures?
 This procedure uses a differential measurement, similar to that in [XY Differential Calibration](xy-differential-calibration.md), to compute the material shrinkage factor without the influence of the extrusion width. I.e. any error in the `rotation_distance` for the extruder, and any error in the (not yet calibrated) extrusion multiplier in the slicer will not affect the calculation of the material shrinkage factor. This results in a more accurate computed value for the shrinkage. For more information see the [paper](shrinkage-and-multiplier-calibration.pdf).
@@ -11,7 +11,7 @@ The extrusion multiplier is then computed while compensating for the just comput
 ## Before We Start
 
 ### Prerequisites
-* You have a copy of the [boron calibration spreadsheet](https://docs.google.com/spreadsheets/d/12_Dv7_rYfVe8zgUhWrPeNcvSJCttsugQXTOSlCp6MAc).
+* You have a copy of the [calibration spreadsheet](https://docs.google.com/spreadsheets/d/12_Dv7_rYfVe8zgUhWrPeNcvSJCttsugQXTOSlCp6MAc).
    * Familiarize yourself with the "Material Calibration" tab before starting.
    * This is a good place to store your calibration results long term.
 * You have competed [XY Differential Calibration](xy-differential-calibration.md).

@@ -1,7 +1,7 @@
 # XY Differential Calibration
 This calibration procedure is intended for CoreXY FDM printers running Klipper firmware. However it can easily be adapted for Cartesian printers and other firmware. If you wish to do that, I recommend reading the [paper](differential-ab-calibration.pdf) first in order to understand the nuances of the procedure.
 
-## Importance of Calibration
+## Why is This Calibration Necessary?
 While it's commonly assumed that the `rotation_distance` for A- and B-motors on CoreXY printers can be precisely determined using belt pitch and pulley tooth count, this overlooks the influence of belt tension and manufacturing variances. These factors necessitate a calibration of the `rotation_distance` for both the A and B motors. For a detailed rationale, please see section 8, Appendix, of [differential-ab-calibration.pdf](differential-ab-calibration.pdf).
 
 *"Scaling in the slicer is enough, isn't it?"* - Relying solely on slicer scaling overlooks critical inaccuracies. An incorrect `rotation_distance` affects not just the final dimensions pre-shrinkage but also alters the toolhead's movement dynamics. This discrepancy leads to uneven material deposition and can vary between the directions controlled by the A- and B-motors. Moreover, it disrupts perimeter spacing, amplifying over- or under-extrusion issues. Slicer scaling cannot address these fundamental errors, nor can adjusting the extrusion multiplier, which merely shifts the problem to other print aspects (e.g., walls, support structures, infill, or bridges).

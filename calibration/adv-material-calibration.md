@@ -1,83 +1,80 @@
-# (Work in Progress) Material Shrinkage and Extrusion Multiplier Tuning
+# Material Shrinkage and Extrusion Multiplier Tuning
 
 ## Why is This Calibration Necessary?
-After correcting for the mechanical accuracy of the tool head movement in [XY Differential Calibration](xy-differential-calibration.md), in order to achieve accurate parts, additional factors must be accounted for. Among those are the extrusion multiplier and compensating for the shrinkage of the material as it cools down, having been thermally expanded during extrusion.
+Following the mechanical precision achieved with [XY Differential Calibration](xy-differential-calibration.md), the next phase in achieving dimensionally accurate prints is to fine-tune material-specific parameters. This guide outlines the process for calibrating material shrinkage and extrusion multiplier to ensure your prints match the intended dimensions accurately.
 
 ## How is This Different from Other Calibration Procedures?
-This procedure uses a differential measurement, similar to that in [XY Differential Calibration](xy-differential-calibration.md), to compute the material shrinkage factor without the influence of the extrusion width. I.e. any error in the `rotation_distance` for the extruder, and any error in the (not yet calibrated) extrusion multiplier in the slicer will not affect the calculation of the material shrinkage factor. This results in a more accurate computed value for the shrinkage. For more information see the [paper](shrinkage-and-multiplier-calibration.pdf).
+This calibration stands out by using a differential measurement strategy that eliminates the influence of errors in the extruder's `rotation_distance` and the extrusion multiplier set in the slicer. This precision allows for an accurate determination of the material shrinkage factor, which in turn informs a more correct extrusion multiplier for the filament.
 
-The extrusion multiplier is then computed while compensating for the just computed material shrinkage to arrive at an extrusion multiplier that is more correct and will result in more dimensionally accurate parts.
+For a detailed explanation, refer to the accompanying [paper](shrinkage-and-multiplier-calibration.pdf).
 
-## Before We Start
+## Prerequisites
+Ensure you have:
+- Completed the [XY Differential Calibration](xy-differential-calibration.md).
+- Accurately [calibrated your extruder's `rotation_distance`](https://ellis3dp.com/Print-Tuning-Guide/articles/extruder_calibration.html).
+- Calibrated [pressure advance](https://ellis3dp.com/Print-Tuning-Guide/articles/pressure_linear_advance/introduction.html) for the filament, with a slight overestimate to prevent corner bulging.
+- Familiarized yourself with the "Material Calibration" tab in the [calibration spreadsheet](https://docs.google.com/spreadsheets/d/12_Dv7_rYfVe8zgUhWrPeNcvSJCttsugQXTOSlCp6MAc).
+- Performed temperature and stringing tuning as temperature changes post-calibration can affect shrinkage.
+- Access to precise measurement tools:
+    * 150 mm digital calipers are required for the shrinkage calibration.
+    * A micrometer is required for the extrusion width calibration presented here (±0.1% accuracy for extrusion widths around 0.5 mm). If a micrometer is unavailable, consider [alternative calibration methods](https://ellis3dp.com/Print-Tuning-Guide/articles/extrusion_multiplier.html), noting potential impacts on precision.
 
-### Prerequisites
-* You have a copy of the [calibration spreadsheet](https://docs.google.com/spreadsheets/d/12_Dv7_rYfVe8zgUhWrPeNcvSJCttsugQXTOSlCp6MAc).
-   * Familiarize yourself with the "Material Calibration" tab before starting.
-   * This is a good place to store your calibration results long term.
-* You have competed [XY Differential Calibration](xy-differential-calibration.md).
-* You have completed [Extruder Rotation Distance Calibration](https://ellis3dp.com/Print-Tuning-Guide/articles/extruder_calibration.html).
-   * Make sure you're happy with your calibration. Redoing the E-steps calibration invalidates all extrusion multiplier calibrations for your filaments.
-* You have [calibrated pressure advance](https://ellis3dp.com/Print-Tuning-Guide/articles/pressure_linear_advance/introduction.html) for the filament you will be calibrating.
-   * The pressure advance must err on the side of too-high so corners don't bulge on the calibration prints.
-   * Test and adjust temporarily before calibrating.
-* You need a pair of 150 mm digital calipers.
-* You need a micrometer for calibrating the extrusion multiplier.
-   * The micrometer is necessary for this extrusion multiplier calibration. Attempts to use normal calipers will introduce an error of around ±5% in the extrusion multiplier making it useless. Only if you have a calibration certificate for your calipers and they say 0.00 mm accuracy on parts below 1 mm in size, then can you use them, expect an error of ±1% when using an extrusion width of 0.5 mm, even then the results are barely useful.
-   * The error contribution to the extrusion multiplier will be ±0.1% from a micrometer of accuracy of 0µm (i.e. 500nm, check your cal. cert) on an extrusion width of 0.5 mm.
-   * If you do not have access to a micrometer, use another method for calibrating extrusion multiplier like [Ellis' Extrusion Multiplier](https://ellis3dp.com/Print-Tuning-Guide/articles/extrusion_multiplier.html). Note that using a method like Ellis' that prioritizes aesthetics may impact the dimensional accuracy of the part slightly.
+## Measuring Tips
+Measure 5 times, taking care to remove the calipers each time. Discard and re-measure any outliers, take the [median](https://en.wikipedia.org/wiki/Median) of the measured values as the value to enter into the spreadsheet.
 
+Note that the [XY Reference Dimensions.stl](stl/XY%20Reference%20Dimensions.stl) model has "tabs" that allow you to easily align the jaws of the calipers by pressing the tab against the neck of the calipers, as shown below for repeatable measurements:
+
+![tab alignment](images/shrinkage-square-tab-alignment.jpg).
 
 ### When Should You Re-Do the Calibration?
-For every filament profile you print with when:
-* First creating the profile
-* After changing extruder `rotation_distance`.
-* After changing the nozzle temperature of the profile (the shrinkage is a factor of the material temperature over ambient).
-
-### What to Expect in Terms of Results
-TBD
+- Initiating a new filament profile.
+- Any change to the extruder's `rotation_distance`.
+- Adjustments to nozzle temperature settings due to their effect on material shrinkage.
 
 ## Calibration Procedure 
+This procedure unfolds in two critical steps: First, we determine the material's shrinkage factor to scale the model pre-printing. Then, we calculate the extrusion multiplier, which hinges on the established shrinkage factor.
 
-### Material Shrinkage
-*This must be done prior to attempting to calibrate the extrusion multiplier.*
+### Step 1: Material Shrinkage Calibration
+1. Add a new filament entry in the calibration spreadsheet.
+2. Print [XY Reference Dimensions.stl](stl/XY%20Reference%20Dimensions.stl) with the following settings:
+    * Solid beams (high perimeter count).
+    * External perimeters are printed first.
+    * Layer height of 0.1 mm.
+    * Reduced extrusion multiplier (by 5%).
+    * Print speed: 60 mm/s, Acceleration: 800 mm/s^2.
+3. Allow the model to cool on the build plate to room temperature.
+4. Mark the X and Y axes.
+5. Measure the 150 mm and 5 mm reference dimensions and record them in the spreadsheet. Refer to [Measuring Tips](#measuring-tips).
 
-1. Create a new row for your filament in the calibration spreadsheet and enter name, manufacturer, colour and current extrusion multiplier.
-1. Print the [XY Reference Dimensions.stl](stl/XY%20Reference%20Dimensions.stl) model.
-    * Use enough perimeters to make the thin beams solid.
-    * Use a layer height of 0.1 mm. 
-    * Print external perimeters first.
-    * Lower the extrusion multiplier by 5% to make sure the model isn't over extruded in the interior which could cause the reference dimensions to bulge and affect the accuracy of the measurement.
-    * Let the model cool slowly to room temperature.
-    * Make sure it is free from warping, re-print if necessary.
-    * Print slowly for maximum accuracy, 60 mm/s is good a safe default.
-1. Let cool slowly to room temperature.
-1. Before taking it off the build place, mark the X and Y axis directions on the part.
-1. Measure the 150 mm and 5 mm reference dimensions as indicated in ![reference dimensions](images/shrinkage-square.png) and enter into the spreadsheet. 
-    * Pay close attention to which dimension is which, the small dimensions are swapped and easily confused.
-    * Make use of the "tabs" on the model to align your calipers as in the image below for repeatable and accurate measurements. ![tab alignment](images/shrinkage-square-tab-alignment.jpg)
-1. Use the X and Y scale factors calculated by the spreadsheet to scale the model in the slicer. Re-slice, re-print and verify the calibration.
-1. If your slicer supports per-material scale factors enter them there, otherwise upvote [PrusaSlicer issue#4475](https://github.com/prusa3d/PrusaSlicer/issues/4475) and keep the calibration spreadsheet handy every time you print.
+![Reference Dimensions](images/shrinkage-square.png)
 
-If the calibration is stable, proceed with calibrating the extrusion multiplier below. 
+Input the calculated scale factors into your slicer or keep them noted for future prints. If you're using  PrusaSlicer, consider upvoting the request for this feature [PrusaSlicer issue#4475](https://github.com/prusa3d/PrusaSlicer/issues/4475).
 
-If the X and Y scale factors are notably different, something has gone wrong. Review the procedure and try again.
+Should the calibration yield notably inconsistent X and Y scale factors, revisit the steps to identify any discrepancies.
 
-### Extrusion Multiplier
-*This calibration relies on knowing the material shrinkage factor computed above, perform the above calibration first.
+### Step 2: Extrusion Multiplier
+1. Input your filament's current extrusion multiplier into the spreadsheet.
+1. Prepare the [Extrusion Multiplier.stl](stl/Extrusion%20Multiplier.stl) object for printing with these settings:
+    * Slightly increased pressure advance to avoid corner bulge.
+    * Wide extrusion width (150% of the nozzle diameter recommended).
+    * Thin layers, preferably 0.1 mm.
+    * Vase mode enabled.
+    * A slow print speed of 60 mm/s and 800 mm/s^2 to reduce impact of pressure build up in the nozzle.
+    * A brim for stability and gradual cooling post-print to prevent warping.
+1. Post-print, let cool completely to room temperature, examine the part for warping or extrusion anomalies.
+1. Measure once above each notches (8 total), as shown in ![notches](images/extrusion%20multiplier%20cube.png), and log these in the spreadsheet.
+1. Update your slicer's material profile with the new extrusion multiplier from the spreadsheet.
 
-1. Enter your current extrusion multiplier for the material in the calibration spreadsheet.
-1. Slice and print the [Extrusion Multiplier.stl](stl/Extrusion%20Multiplier.stl) calibration object.
-    * Increase your pressure advance slightly, the corners must absolutely not bulge.
-    * Use a wide extrusion for best accuracy (150% nozzle size is good).
-    * Use thin layers, 0.01 mm.
-    * Use **vase mode**.
-    * Print slowly for maximum accuracy, 60 mm/s is good a safe default.
-    * Use a generous brim and be prepared to let it cool slowly to room temperature.
-        * Any warping in the part will ruin the calibration.
-1. Let cool slowly to room temperature.
-1. Inspect part for any warping or over extrusion around the corners.
-    * Adjust and re-print if necessary.
-1. Measure twice per side of the cube above the notches on the bottom, note down the reading in the calibration spreadsheet.
-    * As indicated here: ![notches](images/extrusion%20multiplier%20cube.png).
-1. Copy the new extrusion multiplier into your material profile.
-1. Reprint to verify.
+### Step 3: Validate
+1. Re-slice the [XY Reference Dimensions](stl/XY%20Reference%20Dimensions.stl) model, this time:
+   * Scaling the model by the scale factor from the spreadsheet.
+1. Print and measure again as in [Material Shrinkage Calibration](#step-1-material-shrinkage-calibration) but use the extrusion multiplier from the spread sheet instead.
+1. The reference dimensions should be within 0.02 mm of the true values.
+
+If the reference dimensions are off by a to you unacceptable amount, revisit the measurements and if that doesn't help, then restart the process from [step 1](#step-1-material-shrinkage-calibration).
+
+
+## After Calibration
+Congratulations, your primary material parameters are now calibrated and your parts are hopefully accurate!
+
+Next steps involve tuning secondary printing parameters such as perimeter overlap, bridging speeds, elephants foot compensation, etc. 

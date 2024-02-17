@@ -2,7 +2,7 @@
 The final dimensions of a printed part are affected primarily by the XY motion system, the material shrinkage and extrusion width. We've already calibrated the XY motion in [XY Differential Calibration](xy-differential-calibration.md), here we will treat the other two sources of error to hopefully produce repeatedly dimensionally accurate parts.
 
 ## Why This Calibration?
-Conventional material shrinkage calibration methods directly derive the scale factors from measuring a reference object, inadvertently incorporating errors like extrusion width and measurement biases. This approach, conflates material shrinkage with unrelated additive errors, leading to imprecise results.
+Conventional material shrinkage calibration methods directly derive the scale factors from measuring a reference object, inadvertently incorporating errors like extrusion width and measurement biases. Such approaches, conflate material shrinkage with unrelated additive errors, leading to imprecise results.
 
 Our method uses differential measurements, akin to [XY Differential Calibration](xy-differential-calibration.md), isolating material shrinkage by cancelling out additive errors. This results in an accurate scale factor for shrinkage alone.
 

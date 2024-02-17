@@ -48,31 +48,30 @@ This procedure unfolds in two critical steps: First, we determine the material's
 
 ![Reference Dimensions](images/shrinkage-square.png)
 
-Input the calculated scale factors into your slicer or keep them noted for future prints. If you're using  PrusaSlicer, consider upvoting the request for this feature [PrusaSlicer issue#4475](https://github.com/prusa3d/PrusaSlicer/issues/4475).
+Input the calculated scale factors into your slicer or keep the spreadsheet around for future prints. If you're using  PrusaSlicer, consider upvoting the request for this feature [PrusaSlicer issue#4475](https://github.com/prusa3d/PrusaSlicer/issues/4475).
 
 Should the calibration yield notably inconsistent X and Y scale factors, revisit the steps to identify any discrepancies.
 
 ### Step 2: Extrusion Multiplier
-1. Input your filament's current extrusion multiplier into the spreadsheet.
-1. Prepare the [Extrusion Multiplier.stl](stl/Extrusion%20Multiplier.stl) object for printing with these settings:
-    * Slightly increased pressure advance to avoid corner bulge.
-    * Wide extrusion width (150% of the nozzle diameter recommended).
-    * Thin layers, preferably 0.1 mm.
-    * Vase mode enabled.
-    * A slow print speed of 60 mm/s and 800 mm/s^2 to reduce impact of pressure build up in the nozzle.
-    * A brim for stability and gradual cooling post-print to prevent warping.
-1. Post-print, let cool completely to room temperature, examine the part for warping or extrusion anomalies.
-1. Measure once above each notches (8 total), as shown in ![notches](images/extrusion%20multiplier%20cube.png), and log these in the spreadsheet.
-1. Update your slicer's material profile with the new extrusion multiplier from the spreadsheet.
+1. Enter the current extrusion multiplier into the spreadsheet.
+2. Print the [Extrusion Multiplier.stl](stl/Extrusion%20Multiplier.stl) with these settings:
+    * Slightly increased pressure advance.
+    * Wide extrusion width (150% nozzle diameter).
+    * Thin layers (0.1 mm).
+    * Vase mode.
+    * Slow print speed and acceleration.
+    * A brim to prevent warping.
+3. Let the part cool, inspect for warping, then measure the wall thickness with a micrometer above the 8 notches, noting the values in the spreadsheet.
+
+![Notches](images/extrusion%20multiplier%20cube.png)
+
+Update your slicer with the new extrusion multiplier from the spreadsheet.
 
 ### Step 3: Validate
-1. Re-slice the [XY Reference Dimensions](stl/XY%20Reference%20Dimensions.stl) model, this time:
-   * Scaling the model by the scale factor from the spreadsheet.
-1. Print and measure again as in [Material Shrinkage Calibration](#step-1-material-shrinkage-calibration) but use the extrusion multiplier from the spread sheet instead.
-1. The reference dimensions should be within 0.02 mm of the true values.
+1. Re-slice the [XY Reference Dimensions](stl/XY%20Reference%20Dimensions.stl) using the scale factor and new extrusion multiplier.
+2. Print and measure again. Aim for reference dimensions within 0.02 mm of true values.
 
-If the reference dimensions are off by a to you unacceptable amount, revisit the measurements and if that doesn't help, then restart the process from [step 1](#step-1-material-shrinkage-calibration).
-
+If dimensions are not satisfactory, review your technique and measurements, and if necessary, restart from step 1.
 
 ## After Calibration
 Congratulations, your primary material parameters are now calibrated and your parts are hopefully accurate!

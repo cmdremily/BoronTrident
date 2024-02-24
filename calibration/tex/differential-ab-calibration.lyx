@@ -81,7 +81,7 @@ theorems-ams-bytype
 \begin_body
 
 \begin_layout Title
-Differential Calibration for A/B-steps on Core XY Printers
+Differential Calibration for A/B-steps on CoreXY Printers
 \end_layout
 
 \begin_layout Author
@@ -93,39 +93,37 @@ CmdrEmily
 \end_layout
 
 \begin_layout Abstract
-Traditionally, A- and B-motor step calibration in Core XY 3D printers is
- often neglected, assuming precise calculation based on pulley geometry.
- This oversight
-\begin_inset Foot
-status open
-
-\begin_layout Plain Layout
-Please see the appendix for more details.
-\end_layout
-
+This paper presents a novel and accurate, iterative calibration procedure
+ for A and B motor 
+\begin_inset Quotes bld
 \end_inset
 
- overlooks influences from belt tension and manufacturing/assembly tolerances.
- This paper challenges this practice and introduces a novel and robust calibrati
-on method to address these factors.
- 
-\end_layout
+steps per mm
+\begin_inset Quotes brd
+\end_inset
 
-\begin_layout Abstract
-Existing approaches for Cartesian printers involve challenging direct measuremen
-ts or overlook material shrinkage, extrusion width, and print bed thermal
- expansion in calibration prints.
- In response, our proposed method specifically tackles these challenges,
- providing a robust solution to enhance accuracy.
- Adaptable to Cartesian printers with minor modifications, this method offers
- an accurate and robust calibration process for improved 3D printing precision.
-\end_layout
-
-\begin_layout Abstract
+ on CoreXY 3D printers.
+ In contrast to current procedures, we control for material shrinkage, extrusion
+ error, and other bias errors using differential measurements.
+ This results in a calibration that directly addresses mechanical accuracy
+ in isolation.
+ We prove the correctness and perform error propagation to mathematically
+ determine real world accuracy of the calibration from estimated measurement
+ accuracy.
+ Other means of calibration for A and B motor steps generally ignore the
+ impact of material shrinkage which is commonly around 0.5 - 1%, resulting
+ in a poor calibration.
+ We reject the commonly held notion that the A and B motor steps are accurately
+ calculated from pulley geometry.
+ We motivate this by example and show with empirical data that calibrating
+ these values improves dimensional accuracy and corrects for a large fraction
+ of skew error as well.
+ Although intended for CoreXY printers running Klipper firmware, the method
+ can easily be adapted for Cartesian printers and other firmware.
 
 \emph on
-This document aims to prove the correctness of the method, a practical procedure
- to follow can be found at: 
+ This document aims to prove the correctness of the method, a practical
+ procedure to follow can be found at: 
 \begin_inset CommandInset href
 LatexCommand href
 name "github.com/cmdremily/BoronTrident/"
@@ -142,717 +140,246 @@ Introduction
 \end_layout
 
 \begin_layout Standard
-Dimensional inaccuracies in 3D prints often stem from imprecise XY movement
- of the toolhead.
- While correcting these inaccuracies through slicer adjustments may provide
- initial relief, it often leads to a cascade of other adjustments.
- Slicer adjustments can never really fix some issues such as local over-/under-e
-xtrusion or uneven perimeter spacing.
- Likewise, skew correction can only partially fix inaccurate XY motion of
- the toolhead.
- 
-\end_layout
-
-\begin_layout Standard
-Our method aims to address one primary cause of inaccurate XY motion: incorrectl
-y set A-/B-motor steps (or rotation_distance in Klipper).
- In this paper we will prove the correctness of the method a practical procedure
- to follow can be found at: 
-\begin_inset CommandInset href
-LatexCommand href
-name "github.com/cmdremily/BoronTrident/"
-target "https://github.com/cmdremily/BoronTrident/blob/master/calibration/xy-differential-calibration.md"
-literal "false"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Subsection
-Error Sources to be Controlled
-\end_layout
-
-\begin_layout Standard
-To achieve precise A/B step calibration, accurately measuring the tool-head
- movement is crucial.
- Direct measurement on a Core XY proves challenging, leaving us with indirect
- calibration through printing a calibration model.
- Any printed calibration model has the following sources of error that must
- be controlled:
-\end_layout
-
-\begin_layout Itemize
-Thermal expansion/contraction of the print bed 
-\end_layout
-
-\begin_layout Itemize
-Extrusion width error, both filament width inconsistency and extrusion feed
- rate error
-\end_layout
-
-\begin_layout Itemize
-Material shrinkage
-\end_layout
-
-\begin_layout Itemize
-Measurement error, both from the measuring device and the measuring technique
-\end_layout
-
-\begin_layout Standard
-We will keep these in mind as we derive the method.
- 
-\end_layout
-
-\begin_layout Section
-Method Overview
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename ../../../../BoronTrident/calibration/images/ideal_distances.svg
-	width 100col%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:Ideal-wall-to-wall-distance."
-
-\end_inset
-
-Ideal case of a reference width with solid infill in-between.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
- 
-\end_layout
-
-\begin_layout Standard
-Assume a solid rectangular part with a reference dimension, 
-\begin_inset Formula $L$
-\end_inset
-
-.
- This part 
+Dimensional accuracy in FDM 3D printing is influenced by both machine errors
+ and material properties.
+ Machine errors refer to deviations caused by the printer's mechanical inaccurac
+ies, like erroneously set stepper motor 
 \begin_inset Quotes bld
 \end_inset
 
-perfect
+steps per mm
 \begin_inset Quotes brd
 \end_inset
 
-, in the sense that it is printed without any inaccurcies, material shrinkage
- or other defects.
- A crosssection of it is illustrated in figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:Ideal-wall-to-wall-distance."
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
-.
- The part was printed with external perimeters first so any overlapping
- perimeters do not affect the external perimeter surface.
- When extruding the external perimeters of width 
-\begin_inset Formula $W$
-\end_inset
-
-, the toolhead moves a distance of 
-\begin_inset Formula $X$
-\end_inset
-
- centrepoints of the extrusions.
- We can express the reference dimension of this perfect part as:
+ or frame misalignment.
+ Material properties encompass issues like filament shrinkage, flow characterist
+ics, etc.
+ In general machine errors should be corrected for in hardware or firmware
+ and material properties should be corrected for in the slicer by adjusting
+ how the part is printed.
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula 
-\[
-L=X+2\frac{W}{2}=X+W.
-\]
-
-\end_inset
-
-
+As an example, take the common practice of adjusting for dimensional inaccuracie
+s by scaling the part in the slicer.
+ On an hypothetical printer that has a +5% and -5% scale error on the X
+ and Y axis respectively, this will result in the X axis being under extruded
+ by 5% and the Y axis being over extruded by 5%.
+ Regardless of how the part is scaled or which extrusion multiplier is chosen,
+ some part of the model will always be either over or under extruded.
+ This highlights the necessity of correcting for machine errors directly,
+ instead of in the slicer.
 \end_layout
 
 \begin_layout Standard
-When this part is printed in reality, there will be several sources of error:
- The 
-\begin_inset Formula $X$
-\end_inset
-
- toolhead movement will have a scale error 
-\begin_inset Formula $\lambda$
-\end_inset
-
-, the whole model will shrink uniformly
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-This is only generally true for convex and solid models, which is the case
- here.
- For complex shapes with infill the actual shrinkage depends a lot on internal
- stresses that are hard to predict.
-\end_layout
-
-\end_inset
-
- by a factor 
-\begin_inset Formula $\delta$
-\end_inset
-
-, the extrusion width will have a scale error of 
-\begin_inset Formula $\alpha$
-\end_inset
-
-, and there will be additive random errors such as those caused by variance
- from filament diameter and measurement error which we bake into one variable:
- 
-\begin_inset Formula $\epsilon$
-\end_inset
-
-.
- This means that when we measure 
-\begin_inset Formula $L$
-\end_inset
-
- on the printed part, the indicated length 
-\begin_inset Formula $l$
-\end_inset
-
- can be expressed as:
-\begin_inset Formula 
-\[
-l=\delta\left(X\lambda+W\alpha\right)+\epsilon.
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Let's further assume that we now have two such solid parts but with different
- reference dimensions: 
-\begin_inset Formula $L_{1}=X_{1}+W$
-\end_inset
-
- and 
-\begin_inset Formula $L_{2}=X_{2}+W$
-\end_inset
-
-.
- The indicated lengths of these dimensions are likewise 
-\begin_inset Formula $l_{1}=\delta\left(X_{1}\lambda+W\alpha\right)+\epsilon_{1}$
-\end_inset
-
- and 
-\begin_inset Formula $l_{2}=\delta\left(X_{1}\lambda+W\alpha\right)+\epsilon_{2}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-By taking the differences between the reference dimensions we get:
-\begin_inset Formula 
-\begin{multline}
-\Delta L_{1,2}=L_{1}-L_{2}=X_{1}-X_{2}\\
-\Delta l_{1,2}=l_{1}-l_{2}=\left(X_{1}-X_{2}\right)\lambda\delta+\left(\epsilon_{1}-\epsilon_{2}\right)\label{eq:differential}
-\end{multline}
-
-\end_inset
-
-then by taking the ratio of the above, we get:
-\begin_inset Formula 
-\begin{equation}
-\frac{\Delta l_{1,2}}{\Delta L_{1,2}}=\frac{\left(X_{1}-X_{2}\right)\lambda\delta+\epsilon_{1}-\epsilon_{2}}{X_{1}-X_{2}}\overset{\eqref{eq:differential}}{=}\lambda\delta+\frac{\epsilon_{1}-\epsilon_{2}}{\Delta L_{1,2}}\label{eq:scale-factor}
-\end{equation}
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-.
- In other words, we can get the product of the movement scale error, 
-\begin_inset Formula $\lambda$
-\end_inset
-
-, and the material shrinkage factor, 
-\begin_inset Formula $\delta$
-\end_inset
-
-, directly from know and measured quantities alone.
- In particular we can get this product independently of the extrusion width
- and any errors that affect all external extrusions equally.
- Note that the additive error terms (filament diameter inconsistency, extrusion
- inconsistency, measurement error etc) are divided by the difference of
- the reference dimensions and thus can be made arbitrarily small by picking
- suitable the reference dimensions.
-\end_layout
-
-\begin_layout Standard
-This leads us to our first lemma:
-\end_layout
-
-\begin_layout Lemma
-\begin_inset CommandInset label
-LatexCommand label
-name "differential-lemma"
-
-\end_inset
-
-Given two reference dimensions on the same axis; By taking the difference
- of the measured values of these reference dimensions in ratio to the difference
- of the intended values, a linear scale error is obtained that is immune
- to any error that is independent of the feature length and which equally
- affects both measured values.
- In other words, errors from extrusion width and measurement bias do not
- affect the computed scale error.
-\end_layout
-
-\begin_layout Standard
-Unfortunately, we do not directly obtain 
-\begin_inset Formula $\lambda$
-\end_inset
-
- from 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:scale-factor"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
-, but we will address this by design of the calibration model in section
- 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "sec:Designing-a-Calibration"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Subsection
-\begin_inset CommandInset label
-LatexCommand label
-name "subsec:Understanding-the-Error"
-
-\end_inset
-
-Understanding the Error Term
-\end_layout
-
-\begin_layout Standard
-The error term in 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:scale-factor"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
- affects the computed scale factor additively.
- The percentual error in the scale factor product is computed like so:
-\begin_inset Formula 
-\[
-\frac{\frac{\Delta l_{1,2}}{\Delta L_{1,2}}}{\lambda\delta}-1=\frac{\lambda\delta+\frac{\epsilon_{1}-\epsilon_{2}}{\Delta L_{1,2}}}{\lambda\delta}-1=\frac{\epsilon_{1}-\epsilon_{2}}{\lambda\delta\Delta L_{1,2}}
-\]
-
-\end_inset
-
-.
- In section 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "sec:Designing-a-Calibration"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
- we will present a calibration model that removes the influence of material
- shrinkage on the computed 
-\begin_inset Formula $\lambda$
-\end_inset
-
-, i.e.
- 
-\begin_inset Formula $\delta=1$
-\end_inset
-
-.
- Let's examine what the observed error would be if the toolhead movement
- was exact, i.e.
- 
-\begin_inset Formula $\lambda=1$
-\end_inset
-
-, then we know that the percentual error in the computed value of 
-\begin_inset Formula $\lambda$
-\end_inset
-
- is:
-\begin_inset Formula 
-\begin{equation}
-\frac{\epsilon_{1}-\epsilon_{2}}{\Delta L_{1,2}}\label{eq:calib-accuracy}
-\end{equation}
-
-\end_inset
-
-.
- Which becomers the lower bound on how closely the calibrated value of 
-\begin_inset Formula $\lambda$
-\end_inset
-
- can track the true value, the calibration accuracy.
-\end_layout
-
-\begin_layout Section
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:Designing-a-Calibration"
-
-\end_inset
-
-Designing a Calibration Model
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status collapsed
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename ../../../../BoronTrident/calibration/images/single extrusion.jpg
-	width 100col%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:one-line-wide-extrusions"
-
-\end_inset
-
-One extrusion wide lines to measure 
-\begin_inset Formula $l_{i}$
-\end_inset
-
- from.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Consider the calibration 
-\begin_inset Quotes bld
-\end_inset
-
-model
-\begin_inset Quotes brd
-\end_inset
-
- shown in figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:one-line-wide-extrusions"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
-.
- It consists of three single line extrusions with known dimensions for 
-\begin_inset Formula $L_{1}=20$
-\end_inset
-
- and 
-\begin_inset Formula $L_{2}=60$
-\end_inset
-
- as illustrated.
- While each line shrinks homogenously as it cools, the distance between
- them is independent of the material shrinkage factor, but now instead dependent
- on the thermal expansion of the print bed.
- Assuming that the print bed is held at a constant temperature by the printer
- from before print start until after the measurements are done, then the
- expression for the measured distances 
-\begin_inset Formula $l_{1}$
-\end_inset
-
- and 
-\begin_inset Formula $l_{2}$
-\end_inset
-
- becomes: 
-\begin_inset Formula $l_{i}=X_{i}\lambda+\delta W\alpha+\epsilon_{i}\quad\forall i\in\{1,2\}$
-\end_inset
-
-.
- In other words, 
-\begin_inset Formula $\delta$
-\end_inset
-
- still affects the extrusion width but no longer the distance, 
-\begin_inset Formula $X_{i}$
-\end_inset
-
- between centrepoints of the extrusions.
- We insert this new expression for 
-\begin_inset Formula $l_{i}$
-\end_inset
-
- into 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:scale-factor"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
- and get: 
-\begin_inset Formula 
-\begin{equation}
-\frac{\Delta l_{1,2}}{\Delta L_{1,2}}\approx\lambda+\frac{\left(\epsilon_{1}-\epsilon_{2}\right)}{\Delta L_{1,2}}\label{eq:lambda}
-\end{equation}
-
-\end_inset
-
-.
- This result is key, as it proves that lemma 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "differential-lemma"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
- holds for this calibration model as well.
-\end_layout
-
-\begin_layout Standard
-Using this simple, calibration 
-\begin_inset Quotes bld
-\end_inset
-
-model
-\begin_inset Quotes brd
-\end_inset
-
- we can directly compute the scale error in the toolhead motion along the
- measured axis from easily measured quantities.
- The computed scale factor is also independent from material shrinkage and
- systematic extrusion width errors.
- All that's required is some calipers, a steady hand and a constant temperature
- on the print bed.
-\end_layout
-
-\begin_layout Subsection
-A more practical calibration model
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-wide false
-sideways false
-status collapsed
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename ../../../../BoronTrident/calibration/images/pylons3d.png
-	width 100col%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:Improved-calibration-model"
-
-\end_inset
-
-Improved calibration model for a single axis.
- Distances not to scale for image size reasons.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-The calibration model above, while theoretically useful, is unpractical;
- Measuring the distance between single extrusions accurately is difficult
- as there is very little for the caliper jaws to align on.
-\end_layout
-
-\begin_layout Standard
-We improve the model by replacing each of the three lines with a 
-\begin_inset Quotes bld
-\end_inset
-
-pylon
-\begin_inset Quotes brd
-\end_inset
-
- as in figure 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:Improved-calibration-model"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
-.
- Each pylon is concave, symmetrical along the major axis, independent of
- the other pylons, and printed with solid material.
- This means that they will shrink uniformly towards the middle of each pylon.
- Therefore we can view each pylon as one extrusion of the simple model above,
- and with the same caveats about bed temperature as above, equation 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "eq:lambda"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
- applies and allows us to directly get 
-\begin_inset Formula $\lambda$
-\end_inset
-
- with a small error.
- 
+This paper addresses the machine error introduced from improperly set A
+ and B motor steps, an often overlooked or incorrectly compensated for error
+ source.
 \end_layout
 
 \begin_layout Standard
 
 \emph on
-Note that built-in brims are added to keep the pylons stable on the build
- plate during measuring.
- The brims are chosen so that they never touch eachother, as to maintain
- the pylons' independence.
- Each pylon should be printed with external perimeters first and have the
- seams positioned away from the measurement surfaces (marked blue in 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:Improved-calibration-model"
-plural "false"
-caps "false"
-noprefix "false"
-
+N.B.
+ We use the words 
+\begin_inset Quotes bld
 \end_inset
 
-) to guarantee surface consistency.
- The pylons must also be printed with enough perimeters to produce a solid
- part that will shrink symmetrically, rectilinear infill doesn't guarantee
- this depending on if the number of infill layers is odd or even.
- Finally, the part must be printed without any over-extrusion to prevent
- material build-up in the middle of the pylon during printing which may
- affect the measuring surface on the higher layers.
+accuracy
+\begin_inset Quotes brd
+\end_inset
+
+, 
+\begin_inset Quotes bld
+\end_inset
+
+precision
+\begin_inset Quotes brd
+\end_inset
+
+ and 
+\begin_inset Quotes bld
+\end_inset
+
+trueness
+\begin_inset Quotes brd
+\end_inset
+
+ as outlined in ISO 5725.
 \end_layout
 
 \begin_layout Subsection
-Aligning the Calibration Model
+Background
 \end_layout
 
 \begin_layout Standard
-The calibration model as described above should be aligned so that the scale
- factor 
-\begin_inset Formula $\lambda$
+The 
+\begin_inset Quotes bld
 \end_inset
 
- is measured in the primary direction of the motors.
- This means that for a Cartesian printer, the measurement directions should
- be axis aligned.
- For a Core XY printer the calibration model should be on a 45° diagonal
- as each of the motor A-/B-motors drive a diagonal, see figure 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "fig:core-xy-alignment"
-plural "false"
-caps "false"
-noprefix "false"
+steps per mm
+\begin_inset Quotes brd
+\end_inset
+
+ (or 
+\begin_inset Quotes bld
+\end_inset
+
+rotation distance
+\begin_inset Quotes brd
+\end_inset
+
+ in Klipper) of an axis's stepper motor determines the toolhead's movement
+ for a given input to the stepper motor.
+ For instance, a rotation distance of 40 mm in Klipper indicates that the
+ toolhead moves 40 mm for a full revolution of the stepper motor's shaft.
+ In Cartesian machines, this movement aligns with the printer's X and Y
+ axes for the respective X and Y steppers; on a CoreXY machine, the A and
+ B steppers move the toolhead diagonally instead.
+\end_layout
+
+\begin_layout Standard
+To accurately calibrate this value for a specific motor, isolating the travel
+ of the toolhead attributed to that motor is crucial.
+ Otherwise, the measured distance reflects the combined 
+\begin_inset Quotes bld
+\end_inset
+
+steps per mm
+\begin_inset Quotes brd
+\end_inset
+
+ values and their errors from both motors.
+\end_layout
+
+\begin_layout Standard
+Calibration of XY motion falls into two main categories: direct measurement,
+ where an instrument physically contacts the toolhead, and indirect measurement,
+ which involves gauging toolhead motion through dimensions of a printed
+ calibration model.
+\end_layout
+
+\begin_layout Standard
+Direct measurement methods, while straightforward and effective for Cartesian
+ printers, depend heavily on the precision of instrument alignment with
+ the travel direction.
+ For example, a dial gauge with 25 mm travel and 0.01 mm precision, aligned
+ within a 1° error margin, yields an accuracy of 0.06%, or 0.06 mm per 100
+ mm.
+ However, on CoreXY printers, the lack of suitable alignment references
+ makes instrument alignment challenging, rendering direct measurement methods
+ less suitable.
+\end_layout
+
+\begin_layout Standard
+Indirect measurement methods have historically struggled to distinguish
+ between the scale error from the 
+\begin_inset Quotes bld
+\end_inset
+
+steps per mm
+\begin_inset Quotes brd
+\end_inset
+
+ setting and material shrinkage, often leading to poor calibration.
+ Material shrinkage alone can introduce an error ranging from 0.3% to 1%,
+ potentially resulting in up to 1 mm of dimensional inaccuracy per 100 mm.
+ Without precise prior knowledge of material shrinkage, the accuracy of
+ such calibration is compromised
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+The typical calibration process involves reprinting the calibration model
+ after adjustments, using the same material, which can mislead users into
+ believing they have achieved precise machine calibration.
+ In reality, this process often only achieves an alignment between machine
+ inaccuracies and material characteristics.
+ Consequently, while dimensional accuracy might seem improved, the core
+ issues—such as incorrect toolhead motion or extrusion rates—remain unaddressed.
+ Users may then adjust the extrusion multiplier, attempting to correct what
+ appears to be an extrusion issue, but the underlying problem lies in the
+ XY calibration.
+ Although this method can yield satisfactory results by compensating for
+ errors with print settings adjustments, changing materials disrupts this
+ delicate balance, necessitating further calibration adjustments.
+ This cycle underscores the importance of distinguishing between machine
+ calibration and material-specific compensations.
+\end_layout
 
 \end_inset
 
 .
- 
 \end_layout
 
 \begin_layout Standard
-Failure to do these steps will cause the calibration process to not converge
- on the correct steps value for the motors.
+Our approach addresses the challenge of material shrinkage in indirect calibrati
+on methods by utilising standalone 
+\begin_inset Quotes bld
+\end_inset
+
+pylons
+\begin_inset Quotes brd
+\end_inset
+
+ printed on the bed.
+ By measuring the distances between these pylons in situ, we achieve an
+ accurate calibration independent of material shrinkage.
+\end_layout
+
+\begin_layout Subsection
+Adapting the Process for Cartesian Printers
+\end_layout
+
+\begin_layout Standard
+To apply this calibration process to Cartesian printers, the calibration
+ model needs to be rotated by 45°.
+ This adjustment ensures alignment with the Cartesian X and Y axes, rather
+ than the CoreXY A and B diagonals.
+ Additionally, for compatibility with various firmware, the calculations
+ used to derive the calibration parameters must be adapted.
+ Specifically, the conversion from Klipper's 
+\begin_inset Quotes bld
+\end_inset
+
+rotation distance
+\begin_inset Quotes brd
+\end_inset
+
+ to the 
+\begin_inset Quotes bld
+\end_inset
+
+steps per mm
+\begin_inset Quotes brd
+\end_inset
+
+ metric (or equivalent) used in the target firmware requires modification.
+\end_layout
+
+\begin_layout Standard
+In scenarios where the printer lacks an enclosure, it is crucial to allow
+ the print bed sufficient time to reach thermal equilibrium before initiating
+ the print.
+ Similarly, ensuring that the printed part has stabilised thermally with
+ the surrounding environment prior to measurement is essential for obtaining
+ accurate results.
+\end_layout
+
+\begin_layout Subsection
+Calibration Accuracy
+\end_layout
+
+\begin_layout Standard
+Instrument accuracy can be deceptive.
+ Calipers typically have a high precision when used correctly, meaning that
+ if using the same instrument for calibration and subsequent part measurements
+ may falsely suggest high part accuracy, which might still deviate from
+ true dimensions due to the trueness of the instrument.
+\end_layout
+
+\begin_layout Section
+Calibration Method Overview
 \end_layout
 
 \begin_layout Standard
@@ -863,8 +390,8 @@ status collapsed
 
 \begin_layout Plain Layout
 \begin_inset Graphics
-	filename ../../../../BoronTrident/calibration/images/ab_setup.png
-	width 100col%
+	filename /home/emily/src/BoronTrident/calibration/images/measuring_short_reference.jpg
+	width 99col%
 
 \end_inset
 
@@ -877,11 +404,12 @@ status collapsed
 \begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
-name "fig:core-xy-alignment"
+name "fig:pylon_example"
 
 \end_inset
 
-Calibration model correctly aligned for Core XY.
+Two independent pylons being measured on the build plate.
+ 
 \end_layout
 
 \end_inset
@@ -889,168 +417,474 @@ Calibration model correctly aligned for Core XY.
 
 \end_layout
 
-\end_inset
-
+\begin_layout Plain Layout
 
 \end_layout
 
-\begin_layout Subsection
-\begin_inset CommandInset label
-LatexCommand label
-name "subsec:Dimensioning-the-Calibration"
-
 \end_inset
 
-Dimensioning the Calibration Model
+
 \end_layout
 
 \begin_layout Standard
-The error term in 
+Our proposed method is predicated on two foundational ideas: First, freestanding
+, parallel, convex pylons constructed from solid material on the build plate
+ will shrink uniformly and identically, allowing the distance between their
+ centerlines to remain constant and unaffected by material shrinkage.
+ This holds true provided the build plate does not thermally expand or contract
+ from the start of the print until the completion of all measurements.
+ Second, differential measurements negate bias errors, rendering the pylon
+ thickness irrelevant to our calibration.
+ For a visual representation of this concept, refer to Figure 
 \begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:lambda"
+LatexCommand ref
+reference "fig:pylon_example"
 plural "false"
 caps "false"
 noprefix "false"
 
 \end_inset
 
- is minimized when 
-\begin_inset Formula $\Delta L_{1,2}$
-\end_inset
-
- is maximized.
- We choose 
-\begin_inset Formula $L_{1}=150$
-\end_inset
-
- mm as that is the largest dimension that typical consumer calipers
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-150mm calipers have a few extra mm of range to be able to get them around
- 150mm objects to measure them.
-\end_layout
-
-\end_inset
-
- can measure.
- 
-\begin_inset Formula $L_{2}$
-\end_inset
-
- should be minimized while still allowing a stable pylon to measure against.
- Anecdotal evidence suggests a pylon width of 3-4 mm is sufficient which
- gives 
-\begin_inset Formula $L_{2}=10$
-\end_inset
-
- mm as a good value.
-\end_layout
-
-\begin_layout Section
-Calibration Accuracy
+, which illustrates the measurement of two pylons.
 \end_layout
 
 \begin_layout Standard
-The accuracy of the calibration depends on multiple factors.
- Chief among those are measurement error, filament diameter inconsistency,
- XY motion precision, and thermal expansion of the bed.
- We will treat each one in turn.
-\end_layout
-
-\begin_layout Subsection
-Measurement Error
-\end_layout
-
-\begin_layout Standard
-For an estimated measurement error of 
-\begin_inset Formula $\pm0.02$
+We will first elaborate on differential measurements and their advantageous
+ properties for our method.
+ Subsequently, we will demonstrate how combining pylons with differential
+ measurements enables us to precisely quantify the 
+\begin_inset Quotes bld
 \end_inset
 
- equation 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:calib-accuracy"
-plural "false"
-caps "false"
-noprefix "false"
-
+steps per mm
+\begin_inset Quotes brd
 \end_inset
 
- gives us a worst case calibration error of: 
-\begin_inset Formula $\frac{\left(2\cdot0.02\right)}{140}=0.029\%$
-\end_inset
-
- (29 µm over 100 mm).
+ error in the relevant motors, isolated from the effects of material shrinkage
+ and extrusion width variations.
 \end_layout
 
 \begin_layout Subsection
 \begin_inset CommandInset label
 LatexCommand label
-name "subsec:Impact-from-Filament"
+name "subsec:Differential-Measurements"
 
 \end_inset
 
-Filament Diameter Inconsistency
+Theoretical Basis for Differential Measurements
 \end_layout
 
 \begin_layout Standard
-If we allow a square extrusion profile for this analysis
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
-The actual error will be the same even with a pill shaped extrusion profile,
- the proof of this is left as an exercise to the reader.
-\end_layout
-
+Consider a reference dimension 
+\begin_inset Formula $L_{i}$
 \end_inset
 
-, then an extrusion with width 
-\begin_inset Formula $w$
-\end_inset
-
- mm, layer thickness 
-\begin_inset Formula $h$
-\end_inset
-
- mm, and a toolhead move with a feedrate of 
-\begin_inset Formula $v$
-\end_inset
-
- mm/s will have a voloumentric flow rate of: 
-\begin_inset Formula $whv$
-\end_inset
-
- 
-\begin_inset Formula $mm^{3}/s$
+ and its corresponding measured length 
+\begin_inset Formula $\ell_{i}$
 \end_inset
 
 .
- For a nominal filament diameter of 
-\begin_inset Formula $d$
-\end_inset
-
-, the linear extruder feedrate then becomes: 
-\begin_inset Formula $f=\frac{whv}{\frac{d^{2}}{4}\pi}$
-\end_inset
-
- mm/s.
+ Typically, the measured length is influenced by a linear scale error, a
+ bias error, and random error, such that:
 \end_layout
 
 \begin_layout Standard
-How much does the extrusion width 
+\begin_inset Formula 
+\[
+\ell_{i}=\alpha L_{i}+\beta+\epsilon_{i}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Here, 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ is the scale factor, 
+\begin_inset Formula $\beta$
+\end_inset
+
+ is the bias error, and 
+\begin_inset Formula $\epsilon_{i}$
+\end_inset
+
+ represents the random error.
+ When we have two reference dimensions affected by the same bias and scale
+ errors, we can deduce the scale factor 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ directly:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\ell_{2}-\ell_{1}=\alpha\left(L_{2}-L_{1}\right)+\epsilon_{2}-\epsilon_{1}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\alpha=\frac{\ell_{2}-\ell_{1}}{L_{2}-L_{1}}+\frac{\epsilon_{1}-\epsilon_{2}}{L_{2}-L_{1}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Thus we eliminate the influence of bias errors and reduce the impact of
+ random errors on the computed scale factor.
+\end_layout
+
+\begin_layout Subsection
+Pylon Configuration for Calibration
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status collapsed
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/emily/src/BoronTrident/calibration/images/pylon_example.svg
+	width 70col%
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+\begin_inset CommandInset label
+LatexCommand label
+name "fig:three_pylons"
+
+\end_inset
+
+Three pylons in a row with two reference distances.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+Assuming a configuration of three pylons in a row (as shown in Figure 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "fig:three_pylons"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+), let 
+\begin_inset Formula $D_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $D_{2}$
+\end_inset
+
+ denote the nominal edge to edge distances between pylons 1 and 2, and pylons
+ 1 and 3, respectively.
+ The corresponding nominal centre to centre distances are 
+\begin_inset Formula $X_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $X_{2}$
+\end_inset
+
+, with 
+\begin_inset Formula $W$
+\end_inset
+
+ being the nominal width of a pylon.
+ This gives us 
+\begin_inset Formula $D_{i}=X_{i}+W$
+\end_inset
+
+, and actual measured lengths 
+\begin_inset Formula $d_{i}$
+\end_inset
+
+ and the printed pylon width 
 \begin_inset Formula $w$
 \end_inset
 
- change if the filament diameter changes by 
-\begin_inset Formula $\varepsilon$
+ relate as follows:
+\begin_inset Formula 
+\[
+d_{i}=\alpha X_{i}+w+\epsilon_{i}
+\]
+
 \end_inset
 
-? Rewriting the above, gives 
+
+\end_layout
+
+\begin_layout Standard
+We assume homogeneous shrinkage of the pylons, with any non-uniformity in
+ shrinkage or printing anomalies encapsulated within the random error term
+ 
+\begin_inset Formula $\epsilon_{i}$
+\end_inset
+
+.
+ The centre to centre distance is influenced by a linear scale factor that
+ reflects the 
+\begin_inset Quotes bld
+\end_inset
+
+steps per mm
+\begin_inset Quotes brd
+\end_inset
+
+ error for the motor controlling that axis.
+ By applying the principles outlined in Section 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "subsec:Differential-Measurements"
+plural "false"
+caps "false"
+noprefix "false"
+
+\end_inset
+
+, we deduce the scale factor 
+\begin_inset Formula $\alpha$
+\end_inset
+
+ in terms of the measured distances 
+\begin_inset Formula $d_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $d_{2}$
+\end_inset
+
+ and the nominal distances 
+\begin_inset Formula $D_{1}$
+\end_inset
+
+ and 
+\begin_inset Formula $D_{2}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\alpha=\frac{d_{2}-d_{1}}{X_{2}-X_{1}}+\frac{\epsilon_{1}-\epsilon_{2}}{X_{2}-X_{1}}
+\]
+
+\end_inset
+
+Obtaining 
+\begin_inset Formula $X_{i}$
+\end_inset
+
+ is a bit cumbersome, so we note that 
+\begin_inset Formula $D_{2}-D_{1}=X_{2}-X_{1}$
+\end_inset
+
+ and substitute into the above to get:
+\begin_inset Formula 
+\[
+\alpha=\frac{d_{2}-d_{1}}{D_{2}-D_{1}}+\frac{\epsilon_{1}-\epsilon_{2}}{D_{2}-D_{1}}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+which allows us to conveniently deduce the scale error regardless of the
+ actual pylon width and material shrinkage.
+\end_layout
+
+\begin_layout Standard
+With the above, we are now able to put three independent pylons in a row
+ along a motor's driven axis, measure between them and compute the necessary
+ corrections for the 
+\begin_inset Quotes bld
+\end_inset
+
+steps per mm
+\begin_inset Quotes brd
+\end_inset
+
+ value for the motor.
+ However there are several practical aspects that must be considered in
+ order to obtain a precise calibration.
+\end_layout
+
+\begin_layout Section
+Ensuring Calibration Accuracy in Practice
+\end_layout
+
+\begin_layout Standard
+Calibration is only meaningful if there is assured confidence in its validity.
+ A calibration that cannot be substantiated is tantamount to a conjecture
+ rather than a precise adjustment.
+ For indirect methods such as the one we propose, validating the calibration
+ of the machine directly poses a challenge.
+ Any reference part we print is subject to shrinkage and other variables.
+\end_layout
+
+\begin_layout Standard
+To establish confidence in the accuracy and precision of our calibration
+ method, we must scrutinise the various sources of error and determine an
+ upper limit on the potential deviation within the calculated scale factor.
+\end_layout
+
+\begin_layout Standard
+Each of the following error sources contributes additive to the random error
+ term 
+\begin_inset Formula $\epsilon_{i}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Thermal Expansion of the Build Plate
+\end_layout
+
+\begin_layout Standard
+The freestanding nature of the pylons means that any thermal expansion of
+ the build plate will affect the distance between them.
+ It is imperative that the build plate reaches thermal equilibrium prior
+ to commencing the calibration print.
+ The presence of thermal equilibrium can be verified using a thermal camera.
+ In the absence of such equipment, a pragmatic alternative is to monitor
+ the bed’s power draw
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+Klipper UIs Mainsail and Fluidd shows this in the console as a percentage
+ of full power.
+\end_layout
+
+\end_inset
+
+ until it ceases to decrease and stabilises.
+ If the chosen material and bed surface permit, conducting the print with
+ an unheated bed is preferable.
+\end_layout
+
+\begin_layout Standard
+The coefficient of thermal expansion for spring steel print sheets is alloy-depe
+ndent.
+ For the purpose of our analysis, we will employ 
+\begin_inset Formula $\alpha=1.2E^{-5}$
+\end_inset
+
+, which is representative of the higher end of the spectrum for common alloys.
+ Accounting for a typical temperature fluctuation of 
+\begin_inset Formula $\text{\ensuremath{\pm}2}$
+\end_inset
+
+°K, we arrive at a thermal expansion factor of 
+\begin_inset Formula $\pm0.0024\%$
+\end_inset
+
+, or 
+\begin_inset Formula $2.4\text{ µm}$
+\end_inset
+
+ per 100 mm.
+\end_layout
+
+\begin_layout Subsection
+Inconsistent Filament Cross-Section
+\end_layout
+
+\begin_layout Standard
+Variations in filament cross-section during printing can result in pylons
+ with non-uniform widths, contributing to the random error term 
+\begin_inset Formula $\epsilon_{i}$
+\end_inset
+
+.
+ An extrusion of width 
 \begin_inset Formula $w$
+\end_inset
+
+ mm, layer height 
+\begin_inset Formula $h$
+\end_inset
+
+ mm, and toolhead speed 
+\begin_inset Formula $v$
+\end_inset
+
+ mm/s yields a volumetric flow rate of 
+\begin_inset Formula $whv\text{ mm}^{3}/\text{s}$
+\end_inset
+
+.
+ For a filament with nominal diameter 
+\begin_inset Formula $d$
+\end_inset
+
+, the linear extruder feed rate 
+\begin_inset Formula $f$
+\end_inset
+
+ is:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f=\frac{whv}{\frac{d^{2}}{4}\pi}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This presumes a square extrusion profile, an approximation that simplifies
+ the calculation without affecting the outcome.
+ A more complex, pill-shaped extrusion profile would arrive at the same
+ result.
+\end_layout
+
+\begin_layout Standard
+Holding all variables but the filament diameter constant, the extrusion
+ width 
+\begin_inset Formula $w$
+\end_inset
+
+ relates to the diameter 
+\begin_inset Formula $d$
 \end_inset
 
  as:
@@ -1059,23 +893,59 @@ How much does the extrusion width
 \begin_layout Standard
 \begin_inset Formula 
 \[
-\frac{fd^{2}\pi}{4hv}=w
+w=C_{0}d^{2}
 \]
 
 \end_inset
 
-introducing an error of 
+
+\end_layout
+
+\begin_layout Standard
+Where 
+\begin_inset Formula $C_{0}=\frac{f\pi}{4hv}$
+\end_inset
+
+ is a constant.
+ An error 
 \begin_inset Formula $\varepsilon$
 \end_inset
 
- to 
+ in 
 \begin_inset Formula $d$
 \end_inset
 
- gives:
+ results in a new width 
+\begin_inset Formula $w_{\varepsilon}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Standard
 \begin_inset Formula 
 \[
-\frac{f\left(d+\varepsilon\right)^{2}\pi}{4hv}=\frac{fd^{2}\pi}{4hv}+\frac{f\left(2d\varepsilon+\varepsilon^{2}\right)^{2}\pi}{4hv}=w_{\varepsilon}
+w_{\varepsilon}=C_{0}\left(d+\varepsilon\right)^{2}=w+C_{0}\left(2d\varepsilon+\varepsilon^{2}\right)
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+w_{\varepsilon}\overset{2d\varepsilon\gg\varepsilon^{2}}{\approx}w+\frac{2\varepsilon}{d}w
+\]
+
+\end_inset
+
+which yields the error in the extrusion width, 
+\begin_inset Formula $\delta$
+\end_inset
+
+ as:
+\begin_inset Formula 
+\[
+\delta=w_{\varepsilon}-w\approx\frac{2\varepsilon}{d}w
 \]
 
 \end_inset
@@ -1084,239 +954,244 @@ introducing an error of
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula 
-\[
-w+\frac{f\left(2d\varepsilon+\varepsilon^{2}\right)\pi}{4hv}\overset{2d\epsilon\gg\varepsilon^{2}}{\approx}w+\frac{f2d\varepsilon\pi}{4hv}\approx w_{\varepsilon}
-\]
-
+As of 2024-01-05, Prusament specifies a tolerance of 
+\begin_inset Formula $±0.02\text{ mm}$
 \end_inset
 
-plugging in 
-\begin_inset Formula $\frac{fd^{2}\pi}{4hv}=w$
+ on their PETG filament, though empirical evidence suggests that many spools
+ maintain a tighter tolerance of 
+\begin_inset Formula $\pm0.01\text{ mm}$
 \end_inset
 
- again allows us to simplify a bit:
-\end_layout
-
-\begin_layout Standard
-\begin_inset Formula 
-\[
-\frac{2\varepsilon}{d}w\approx w_{\varepsilon}-w
-\]
-
+ over substantial portions of the filament.
+ Taking 
+\begin_inset Formula $\varepsilon=\pm0.01\text{ mm}$
 \end_inset
 
-.
- In other words, the error in extrusion width from a filament diameter variation
- of 
-\begin_inset Formula $\varepsilon$
+ for these more precise sections and a nominal extrusion width of 
+\begin_inset Formula $w=0.5\text{ mm}$
 \end_inset
 
- is 
-\begin_inset Formula $\frac{2\varepsilon}{d}w$
-\end_inset
-
-, where 
-\begin_inset Formula $w$
-\end_inset
-
- is the original extrusion width, and 
-\begin_inset Formula $d$
-\end_inset
-
- is the filament diameter.
- 
-\end_layout
-
-\begin_layout Standard
-Assume a high quality 1.75 mm filament can hold a local tolerance on the
- length of filament required to print the calibration model, of around 
-\begin_inset Formula $\varepsilon=\pm0.01$
-\end_inset
-
- mm.
- With a nominal extrusion width of 
-\begin_inset Formula $w=0.5$
-\end_inset
-
- mm, we get an error of: 
+, the error bound is 
 \begin_inset Formula $\approx\pm5.7\text{µm}$
 \end_inset
 
 .
- As the extrusion is centered on the toolhead path and exterior perimeters
- are printed first, only half of this error will be on the measurement surface.
- I.e.
- an estimated contribution of 
-\begin_inset Formula $\approx\pm2.9$
+ Considering that the extrusion is centred on the toolhead path and exterior
+ perimeters are printed first, only half of this error is expected to impact
+ the measurement surface, contributing an estimated 
+\begin_inset Formula $\approx\pm2.9\text{ µm}$
 \end_inset
 
- µm to 
-\begin_inset Formula $\epsilon$
-\end_inset
-
- can be expected from filament variance.
-\end_layout
-
-\begin_layout Standard
-By taking the worst case values: 
-\begin_inset Formula $\epsilon_{1}=+3$
-\end_inset
-
- µm and 
-\begin_inset Formula $\epsilon_{2}=-3$
-\end_inset
-
- µm, and chosing 
-\begin_inset Formula $L_{1}=150$
-\end_inset
-
- mm and 
-\begin_inset Formula $L_{2}=10$
-\end_inset
-
- mm (see section 
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "subsec:Dimensioning-the-Calibration"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
-), equation 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:calib-accuracy"
-plural "false"
-caps "false"
-noprefix "false"
-
-\end_inset
-
- gives a worst case calibration error of 
-\begin_inset Formula $\frac{14\text{µm }}{140\text{mm}}=0.0043\%$
-\end_inset
-
- (4.3 µm per 100 mm) from the effects of filament inconsistency.
-\end_layout
-
-\begin_layout Standard
-It should be noted that in practice the error will be significantly lower
- as the surface roughness that arises from filament inconsistency will affect
- each pylon approximately equally and thus be cancelled out in equation
- 
-\begin_inset CommandInset ref
-LatexCommand eqref
-reference "eq:calib-accuracy"
-plural "false"
-caps "false"
-noprefix "false"
-
+ to the random error 
+\begin_inset Formula $\epsilon_{i}$
 \end_inset
 
 .
 \end_layout
 
+\begin_layout Subsection
+Non-identical pylon shrinkage
+\end_layout
+
 \begin_layout Standard
+If each pylon is homogeneous and symmetrical, and the material shrinks uniformly
+, then the pylons should shrink identically.
+ However, some variance is inevitable.
+\end_layout
 
-\emph on
-N.B.
- As of writing 2024-01-05, Prusament guarantees a diameter varition below
- 
-\begin_inset Formula $\pm0.02$
+\begin_layout Standard
+Analytically determining this error from non-uniformity is impractical;
+ instead, we rely on empirical observations.
+ Our calibration experiments involved measuring the width of pylons across
+ several prints, revealing a maximum variance of 
+\begin_inset Formula $2\text{ µm}$
 \end_inset
 
- mm on the entire spool of their PETG, with actual variance on the entire
- spool often being closer to 0.01 mm than 0.02 mm.
- It's practically achievable to have 
-\begin_inset Formula $\pm0.01$
-\end_inset
-
- mm variance on the length of filament required for the calibration print.
+.
+ This small variance aligns with the observed filament diameter tolerance,
+ leading us to surmise that non-identical pylon shrinkage effects are subsumed
+ within the filament diameter variance.
 \end_layout
 
 \begin_layout Subsection
-XY Motion Precision
+Measurement Error
 \end_layout
 
 \begin_layout Standard
-This depends highly on the printer geometry, so we'll use an example Core
- XY printer here that has 0.9 degree steppers, 64 µsteps and a pulley circumferen
-ce of 40 mm (GT2 20 tooth pulley).
+Typical consumer-grade 150 mm calipers possess an accuracy of 
+\begin_inset Formula $\pm20\text{ µm}$
+\end_inset
+
+, setting the lower limit for the trueness of our calibration.
+ The precision of caliper measurements, a significant determinant of our
+ calibration's upper accuracy bound, hinges on the measurement technique
+ employed.
 \end_layout
 
 \begin_layout Standard
-For the example printer there are 
+Enhanced measurement precision is achieved by conducting multiple independent
+ measurements, eliminating outliers, and using the median of the collected
+ data.
+ The median is preferable to the mean as a more robust estimator in the
+ face of an unknown underlying distribution of measurement values—due to
+ varied user techniques.
+\end_layout
+
+\begin_layout Standard
+Empirical testing suggests that with adequate practice, a measurement precision
+ of ±20 µm is attainable.
+ It's important to note that any bias error introduced by consistently applying
+ excessive force—and thus potentially deflecting the pylons—will be nullified
+ in differential measurements.
+ Therefore, while consistent force application is crucial, one must be cautious
+ not to exert so much force as to risk delaminating the pylons from the
+ build plate.
+\end_layout
+
+\begin_layout Standard
+Assuming, for argument's sake, that the underlying distribution of measurements
+ is Gaussian with a 
+\begin_inset Formula $3\sigma$
+\end_inset
+
+ value of 
+\begin_inset Formula $20\text{ µm}$
+\end_inset
+
+, and by taking five measurements and selecting the median, we can approximate
+ the variance of the median as a precision indicator:
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sigma_{\text{median}}\approx\frac{\sigma_{\text{mean}}}{\sqrt{n}}1.253
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+3\sigma_{\text{median}}\approx11.2\text{ µm}
+\]
+
+\end_inset
+
+While we recognise the likelihood that the Gaussian assumption will not
+ hold true, it offers the only precision estimate available to us for the
+ measurement method suggested above.
+ To reflect this uncertainty, we round the calculated precision to one significa
+nt figure, using 
+\begin_inset Formula $\pm10\text{ µm}$
+\end_inset
+
+ as the measurement error's contribution to the random error term in our
+ calibration process.
+\end_layout
+
+\begin_layout Subsection
+Stepper Motor Resolution
+\end_layout
+
+\begin_layout Standard
+The resolution of the XY motion plane depends on the printer hardware.
+ For this analysis we will assume a CoreXY printer with 0.9° steppers, 64
+ microsteps, and a 40 mm pulley circumference.
+ This results in 
 \begin_inset Formula $\frac{360}{0.9}=400$
 \end_inset
 
- full steps per pulley revolution, or 
+ full steps per revolution, or 
 \begin_inset Formula $400\cdot64=25600$
 \end_inset
 
- µsteps.
- This means that each microstep moves the toolhead 
-\begin_inset Formula $40\text{mm}/25600\text{steps}=1.56\text{µm/step}.$
-\end_inset
-
- We will take 1.56 µm as the maximum error from the XY motion precision.
- We assume steps are not skipped.
-\end_layout
-
-\begin_layout Subsection
-Thermal Expansion of Bed
-\end_layout
-
-\begin_layout Standard
-Thermal expansion of a material is computed as 
-\begin_inset Formula $\frac{\Delta L}{L_{0}}=\alpha\Delta T$
-\end_inset
-
- where 
-\begin_inset Formula $\frac{\Delta L}{L_{0}}$
-\end_inset
-
- is the change in length over the original length, 
-\begin_inset Formula $\alpha$
-\end_inset
-
- is the coefficient of thermal expansion and 
-\begin_inset Formula $\Delta T$
-\end_inset
-
- is the change in temperature.
- A typical steel has 
-\begin_inset Formula $\alpha=1.2E^{-5}$
-\end_inset
-
- and a typical print bed can stay within 
-\begin_inset Formula $\text{\ensuremath{\pm}2}$
-\end_inset
-
- degrees kelvin of the set value.
- This gives a maximum percentual change in elongation of the print bed of
- 
-\begin_inset Formula $1.2E^{-5}\cdot4=0.0048\%$
-\end_inset
-
- or 4.8 µm per 100 mm.
+ microsteps.
  
 \end_layout
 
-\begin_layout Subsection
-Total Error
+\begin_layout Standard
+This equates to a nominal
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+This is not an exact value, which is why this document exists.
+\end_layout
+
+\end_inset
+
+ toolhead movement of:
+\begin_inset Formula 
+\[
+\frac{40\text{ mm}}{25600\text{ micro steps}}=1.56\text{ µm/micro step}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-Adding up the error sources from above we end up with a worst case calibration
- error of 40 µm per 100 mm.
- This error is dominated by the influence of measurement error.
- Given that the same instrument will often be used for calibrating the printer
- as for measuring the produced parts, this means that the indicated error
- will often be less, for the instrument used above, the indicated error
- would be closer to 10.7 µm per 100 mm.
+The firmware may either truncate positions or round to the nearest step,
+ resulting in a maximal positional error of 
+\begin_inset Formula $1.56\text{ µm}$
+\end_inset
+
+ or 
+\begin_inset Formula $\pm0.78\text{ µm}$
+\end_inset
+
+ from the motor resolution.
+\end_layout
+
+\begin_layout Standard
+In general, assuming belts are tensioned correctly, backlash from a belt
+ driven axis is minimal and we will ignore it for our analysis as we currently
+ lack means of quantifying it.
+ Likewise we assume that the motion system is free friction and belt flex
+ to the point where one micro step input will move the toolhead the appropriate
+ amount.
+\end_layout
+
+\begin_layout Standard
+Therefore we accept 
+\begin_inset Formula $1.56\text{ µm}$
+\end_inset
+
+ as the random error from the XY motion system, in addition to the scale
+ error that the calibration will remove.
+\end_layout
+
+\begin_layout Subsection
+Skew of the XY Motion System
+\end_layout
+
+\begin_layout Standard
+Skew in a CoreXY printer arises from two principal sources: the non-squareness
+ of the frame and axes, and the uneven belt tension across the motors.
+ While the skew stemming from belt tension is addressed by our calibration
+ process, the skew due to frame misalignment must be corrected through firmware
+ compensation.
+\end_layout
+
+\begin_layout Standard
+Skew can affect the calibration print, impacting the measurements taken
+ from it.
+ Each round of calibration will remove a part of the belt tension induced
+ skew, reducing the measurement error in the next round.
+ This iteratively removes skew error until the calibration converges.
+\end_layout
+
+\begin_layout Standard
+Upon reaching this iterative convergence, it is advisable to pause and perform
+ a skew correction in the firmware.
+ This step ensures that subsequent calibration rounds can converge on the
+ true values without interference from residual structural skew.
+ It is also essential to disable any preexisting skew adjustments in the
+ firmware prior to starting the calibration to allow the procedure to effectivel
+y eliminate the skew resulting from belt tension disparities.
 \end_layout
 
 \begin_layout Subsection
@@ -1324,15 +1199,137 @@ Summary
 \end_layout
 
 \begin_layout Standard
-The best venue for improving accuracy of the calibration is to improve the
- measurement accuracy by use of better instruments and measurement procedure.
- Steppers with 0.9 degree precision and 64 microsteps are not limiting the
- impact on the part accuracy.
- Filament diameter variance can be controlled to only contribute 4.3 µm per
- 100 mm of error.
- The impacts of thermal expansion of the bed are noteworthy, and the bed
- must be kept at a constant temperature during printing of the test parts
- and measuring of them.
+Under the following conditions:
+\end_layout
+
+\begin_layout Itemize
+Build plate is maintained within 
+\begin_inset Formula $\pm2\text{ \textdegree K}$
+\end_inset
+
+ of the set temperature, or build plate is not heated.
+\end_layout
+
+\begin_layout Itemize
+Filament with a local variance of 
+\begin_inset Formula $\pm0.01\text{ mm}$
+\end_inset
+
+ and thin layers are used for the calibration print.
+\end_layout
+
+\begin_layout Itemize
+Pylons shrink uniformly, by slowly letting them cool to ambient temperature.
+\end_layout
+
+\begin_layout Itemize
+A measurement precision of 
+\begin_inset Formula $\pm0.01\text{ mm}$
+\end_inset
+
+ is maintained and the instrument has an accuracy of 
+\begin_inset Formula $\pm0.02\text{ mm}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+0.9° steppers with 64 microsteps are used and the XY motion system is free
+ from backlash and significant friction.
+\end_layout
+
+\begin_layout Itemize
+Skew correction is initially disabled, then recalibrated and applied after
+ the process has converged once, and then this calibration is repeated until
+ convergence again.
+\end_layout
+
+\begin_layout Itemize
+A pylon setup with 
+\begin_inset Formula $D_{2}=150\text{ mm}$
+\end_inset
+
+ and 
+\begin_inset Formula $D_{1}=10\text{ mm}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+We can calculate the precision of the calibration as follows:
+\begin_inset Formula 
+\[
+\frac{\epsilon_{1}-\epsilon_{2}}{D_{2}-D_{1}}<\frac{2\epsilon_{max}}{140}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\epsilon_{max}=\epsilon_{\text{bed}}+\epsilon_{\text{filament}}+\epsilon_{\text{measurement}}+\epsilon_{\text{motor}}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\epsilon_{max}=2.4\text{ µm}+2.9\text{ µm}+10\text{ µm}+0.78\text{ µm}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\epsilon_{max}\approx0.017\text{ mm}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\frac{\epsilon_{1}-\epsilon_{2}}{D_{2}-D_{1}}<2.5E^{-4}
+\]
+
+\end_inset
+
+Or in other words, the percentual precision in scale will be better than
+ 0.025% or 
+\begin_inset Formula $25\text{ µm}$
+\end_inset
+
+ per 
+\begin_inset Formula $100\text{ mm}$
+\end_inset
+
+ under the above conditions.
+ The accuracy is then the instrument trueness added to that.
+ Giving a total accuracy of 
+\begin_inset Formula $\frac{0.02\text{ mm}}{150\text{ mm}}+0.025\%=0.038\%$
+\end_inset
+
+ or 
+\begin_inset Formula $38\text{ µm}$
+\end_inset
+
+ per 
+\begin_inset Formula $100\text{ mm}$
+\end_inset
+
+.
+ 
+\end_layout
+
+\begin_layout Section
+Closing Words
 \end_layout
 
 \begin_layout Section
@@ -1340,20 +1337,49 @@ Closing Words
 \end_layout
 
 \begin_layout Standard
-We have proven that as long as the error sources are well controlled and
- the presented calibration model (or similar) is used, consumer grade FDM
- 3D printers can be calibrated to a high degree of accuracy with commonly
- available tools and materials.
- For the examples provided here, we show that a worst case error of 40 µm
- per 100 mm can be achieved with proper procedure and instruments.
- A user validating the calibration with the same instrument they used for
- performing the calibration might see an indicated case error of 11 µm per
- 100 mm due to the inherent inaccuracy in the instrument being cancelled
- out.
+This paper has demonstrated a novel approach for calibrating A and B motor
+ steps on Core XY 3D printers, leveraging the use of independent pylons
+ to achieve high levels of accuracy and precision with commonly available
+ tools and materials.
+ The proposed method addresses critical shortcomings in traditional calibration
+ techniques, particularly in accounting for material shrinkage and extrusion
+ errors.
+\end_layout
+
+\begin_layout Standard
+Through empirical validation, we have established that a worst-case error
+ of 
+\begin_inset Formula $45\text{ µm}$
+\end_inset
+
+ per 
+\begin_inset Formula $100\text{ mm}$
+\end_inset
+
+ is achievable under rigorous adherence to the outlined procedure and with
+ the use of appropriate measuring instruments.
+ Moreover, the inherent instrument inaccuracy, when mirrored in both calibration
+ and subsequent validation measurements, may present a perceived error reduction
+ to 
+\begin_inset Formula $25\text{ µm}$
+\end_inset
+
+ per 
+\begin_inset Formula $100\text{ mm}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Future work could aim at improving the practicality of the calibration model,
+ suggesting suitable material/print bed combinations to avoid heating the
+ bed, as well as improving the error bound by analysing some of the error
+ sources we ignored with more rigour.
 \end_layout
 
 \begin_layout Section
-Appendix: Why is the A/B-steps value calculated solely from pulley geometry
+Appendix: Why is the A/B steps value calculated solely from pulley geometry
  incorrect?
 \end_layout
 
